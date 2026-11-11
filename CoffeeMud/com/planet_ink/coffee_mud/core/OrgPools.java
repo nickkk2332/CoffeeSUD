@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 import com.planet_ink.coffee_mud.Common.interfaces.Clan;
+import com.planet_ink.coffee_mud.Common.interfaces.ClanPosition;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 import com.planet_ink.coffee_mud.core.MiniJSON.JSONObject;
 import com.planet_ink.coffee_mud.core.collections.Pair;
@@ -50,6 +51,8 @@ public final class OrgPools
 	{
 		public final String	id, title, material;
 		public final long	max, money;
+		/** the ranks (position names or IDs) whose services it pays for, and who may take from it; none: every member, and no one */
+		public final List<String>	spenders, takers;
 
 		Kind(final String id, final String parms)
 		{
@@ -58,7 +61,63 @@ public final class OrgPools
 			max = Math.max(1, CMath.s_long(CMParms.getParmStr(parms, "MAX", "1000")));
 			money = Math.max(0, CMath.s_long(CMParms.getParmStr(parms, "MONEY", "0")));
 			material = CMParms.getParmStr(parms, "MATERIAL", "").trim().toUpperCase(Locale.ROOT);
+			spenders = ranks(CMParms.getParmStr(parms, "SPENDERS", ""));
+			takers = ranks(CMParms.getParmStr(parms, "TAKERS", ""));
 		}
+
+		private static List<String> ranks(final String list)
+		{
+			final List<String> out = new ArrayList<String>();
+			for(final String r : CMParms.parseCommas(list, true))
+			{
+				if(r.trim().length() > 0)
+					out.add(r.trim());
+			}
+			return Collections.unmodifiableList(out);
+		}
+	}
+
+	/** a member's rank in an organization, as its position's name and ID; empty for one who is no member */
+	private static List<String> rankOf(final MOB M, final Clan C)
+	{
+		final List<String> out = new ArrayList<String>();
+		final Pair<Clan, Integer> role = (M == null) ? null : M.getClanRole(C.clanID());
+		if(role == null)
+			return out;
+		final int r = role.second.intValue();
+		out.add(C.getRoleName(r, false, false));
+		final ClanPosition[] ps = (C.getGovernment() == null) ? null : C.getGovernment().getPositions();
+		if((ps != null) && (r >= 0) && (r < ps.length) && (ps[r] != null))
+			out.add(ps[r].getID());
+		return out;
+	}
+
+	private static boolean ranked(final List<String> rank, final List<String> allowed)
+	{
+		for(final String a : allowed)
+		{
+			for(final String r : rank)
+			{
+				if(a.equalsIgnoreCase(r))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Why a member may not have a service paid from a pool, or "": not a
+	 * member, or not of a rank its SPENDERS name.
+	 */
+	public static String whyNotSpend(final MOB M, final Clan C, final String pool) throws IOException
+	{
+		final Kind k = kind(pool);
+		final List<String> rank = rankOf(M, C);
+		if(rank.isEmpty())
+			return CMLib.lang().L("only for members of @x1", C.getName());
+		if(!k.spenders.isEmpty() && !ranked(rank, k.spenders))
+			return CMLib.lang().L("@x1's @x2 pays only for @x3", C.getName(), k.title.toLowerCase(Locale.ROOT), String.join(", ", k.spenders));
+		return "";
 	}
 
 	public static Map<String, Kind> kinds()
@@ -113,6 +172,13 @@ public final class OrgPools
 		return (o instanceof Number) ? ((Number)o).longValue() : 0;
 	}
 
+	/** notes a pool's movement in the LEDGER of the character it was for */
+	public static void note(final MOB M, final Clan C, final String kind, final String pool, final long units, final long receipt)
+	{
+		if(M != null)
+			Provenance.event(M, FAMILY, "orgpools.ini " + pool.toUpperCase(Locale.ROOT), kind + " " + units + " unit(s) of " + C.getName() + "'s " + pool.toLowerCase(Locale.ROOT) + ", receipt #" + receipt);
+	}
+
 	private static long record(final Clan C, final String kind, final String who, final String pool, final long units, final String what) throws IOException
 	{
 		final JSONObject L = json(C, "POOLLEDGER");
@@ -131,11 +197,12 @@ public final class OrgPools
 		while(entries.size() > 20)
 			entries.remove(0);
 		L.put("entries", entries.toArray());
-		// each contributor's and each consumer's totals, by pool
-		final String side = kind.equals("gave") ? "givers" : "users";
+		// each contributor's and each consumer's totals, by pool: given and added in; spent and taken out; a refund takes back a spend
+		final String side = (kind.equals("gave") || kind.equals("added")) ? "givers" : "users";
+		final long signed = kind.equals("refunded") ? -units : units;
 		final JSONObject totals = L.containsKey(side) ? (JSONObject)L.get(side) : new JSONObject();
 		final JSONObject byPool = totals.containsKey(pool) ? (JSONObject)totals.get(pool) : new JSONObject();
-		byPool.put(who, Long.valueOf(((byPool.get(who) instanceof Number) ? ((Number)byPool.get(who)).longValue() : 0) + units));
+		byPool.put(who, Long.valueOf(((byPool.get(who) instanceof Number) ? ((Number)byPool.get(who)).longValue() : 0) + signed));
 		totals.put(pool, byPool);
 		L.put(side, totals);
 		C.setStat("POOLLEDGER", ModuleDefinitions.json(L));
@@ -187,8 +254,85 @@ public final class OrgPools
 			put(C, k.id, now + n);
 			final long receipt = record(C, "gave", M.Name(), k.id, n, (k.money > 0) ? "money" : k.material.toLowerCase(Locale.ROOT));
 			C.update();
+			note(M, C, "gave", k.id, n, receipt);
 			ModuleStats.count(FAMILY, k.id.toLowerCase(Locale.ROOT), "units given");
 			return CMLib.lang().L("You give @x1 unit(s) to @x2's @x3 (receipt #@x4); it holds @x5.", "" + n, C.getName(), k.title, "" + receipt, "" + (now + n));
+		}
+	}
+
+	/** a script's grant to a pool, paid by no one; refused past its MAX; @return the receipt number */
+	public static long add(final Clan C, final String pool, final long n, final String by, final String what) throws IOException
+	{
+		final Kind k = kind(pool);
+		if(n <= 0)
+			throw new IOException("add at least one unit");
+		synchronized(C)
+		{
+			final long now = units(C, k.id);
+			if(now + n > k.max)
+				throw new IOException(k.title + " holds at most " + k.max + "; it has " + now);
+			put(C, k.id, now + n);
+			final long receipt = record(C, "added", by, k.id, n, what);
+			C.update();
+			return receipt;
+		}
+	}
+
+	/** a refund of a spend: the units go back (past MAX if they must: they were there before) */
+	public static long refund(final Clan C, final String pool, final long n, final String forWhom, final String what) throws IOException
+	{
+		final Kind k = kind(pool);
+		synchronized(C)
+		{
+			put(C, k.id, units(C, k.id) + n);
+			final long receipt = record(C, "refunded", forWhom, k.id, n, what);
+			C.update();
+			return receipt;
+		}
+	}
+
+	/** POOLS TAKE: a member of a rank its TAKERS name takes n units out, as money or a pile of its material; @return what happened */
+	public static String take(final MOB M, final Clan C, final String pool, final long n) throws IOException
+	{
+		final Kind k = kind(pool);
+		final List<String> rank = rankOf(M, C);
+		if(rank.isEmpty())
+			throw new IOException("only members take from " + C.getName() + "'s " + k.title);
+		if(k.takers.isEmpty() || !ranked(rank, k.takers))
+			throw new IOException(k.takers.isEmpty() ? "no one takes from " + C.getName() + "'s " + k.title
+				: "only " + String.join(", ", k.takers) + " take from " + C.getName() + "'s " + k.title);
+		if(n <= 0)
+			throw new IOException("take at least one unit");
+		synchronized(C)
+		{
+			final long now = units(C, k.id);
+			if(now < n)
+				throw new IOException(C.getName() + "'s " + k.title + " holds " + now + ", not " + n);
+			String got;
+			if(k.money > 0)
+			{
+				final String cur = CMLib.beanCounter().getCurrency(M);
+				CMLib.beanCounter().giveSomeoneMoney(M, cur, (double)n * k.money);
+				got = CMLib.beanCounter().nameCurrencyShort(cur, (double)n * k.money);
+			}
+			else
+			{
+				final int code = com.planet_ink.coffee_mud.Items.interfaces.RawMaterial.CODES.FIND_CaseSensitive(k.material);
+				if(code < 0)
+					throw new IOException("no registered material " + k.material);
+				final com.planet_ink.coffee_mud.Items.interfaces.Item I = CMLib.materials().makeItemResource(code);
+				I.basePhyStats().setWeight((int)Math.min(Integer.MAX_VALUE, n));
+				CMLib.materials().adjustResourceName(I);
+				I.recoverPhyStats();
+				M.addItem(I);
+				got = I.name();
+			}
+			put(C, k.id, now - n);
+			final long receipt = record(C, "took", M.Name(), k.id, n, "");
+			C.update();
+			note(M, C, "took", k.id, n, receipt);
+			ModuleStats.count(FAMILY, k.id.toLowerCase(Locale.ROOT), "units taken");
+			return CMLib.lang().L("You take @x1 unit(s) from @x2's @x3 (receipt #@x4): @x5.", "" + n, C.getName(), k.title, "" + receipt, got);
 		}
 	}
 

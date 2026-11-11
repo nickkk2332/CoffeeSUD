@@ -808,6 +808,102 @@ public class JSCm
 	}
 
 	/**
+	 * P04: a held service payment kept (the NPC's service is done).
+	 * @param npc the NPC with the service
+	 * @param who whose payment
+	 * @param service the service's id
+	 * @return what happened, in words
+	 */
+	public String serviceDone(final MOB npc, final MOB who, final String service)
+	{
+		try
+		{
+			return Services.done(npc, who, service);
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.serviceDone: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * P04: the latest payment for a service given back (held or kept).
+	 * @param npc the NPC with the service
+	 * @param who whose payment
+	 * @param service the service's id
+	 * @return what happened, in words
+	 */
+	public String serviceRefund(final MOB npc, final MOB who, final String service)
+	{
+		try
+		{
+			return Services.refund(npc, who, service);
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.serviceRefund: " + e.getMessage());
+		}
+	}
+
+	private static com.planet_ink.coffee_mud.Common.interfaces.Clan org(final String name, final String fn)
+	{
+		final com.planet_ink.coffee_mud.Common.interfaces.Clan C = CMLib.clans().findClan(name);
+		if(C == null)
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", fn + ": no organization " + name);
+		return C;
+	}
+
+	/**
+	 * P08: the units in an organization's shared pool.
+	 * @param organization its name
+	 * @param pool the pool's kind (orgpools.ini)
+	 * @return the units
+	 */
+	public long poolUnits(final String organization, final String pool)
+	{
+		try
+		{
+			return OrgPools.units(org(organization, "cm.poolUnits"), pool);
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.poolUnits: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * P08: units added to an organization's pool by the script, paid by no one; refused past its MAX.
+	 * @return the receipt number
+	 */
+	public long poolAdd(final String organization, final String pool, final long n, final String what)
+	{
+		try
+		{
+			return OrgPools.add(org(organization, "cm.poolAdd"), pool, n, "a script", what);
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.poolAdd: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * P08: units spent from an organization's pool by the script; refused, spending nothing, when it holds too little.
+	 * @return the receipt number
+	 */
+	public long poolSpend(final String organization, final String pool, final long n, final String what)
+	{
+		try
+		{
+			return OrgPools.spend(org(organization, "cm.poolSpend"), pool, n, "a script", what);
+		}
+		catch(final java.io.IOException e)
+		{
+			throw org.mozilla.javascript.ScriptRuntime.constructError("Error", "cm.poolSpend: " + e.getMessage());
+		}
+	}
+
+	/**
 	 * P11: takes up a culture (core/Cultures), by the same rules as anywhere:
 	 * the one held is left first, under its rules.
 	 * @param mob who

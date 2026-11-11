@@ -1099,7 +1099,31 @@ SPEECH_PROG heal mend
 
 Asked when the record says no, the request is refused before the script hears
 it ("Healing: not now, it costs 10 gold coins."), so the script never runs for
-someone who has not paid. Words said to the whole room ask no one: a service
+someone who has not paid.
+
+When the service can fail, take the payment only once it is done. With
+`"pay": "done"` the cost is held when asked, and the script keeps it or gives
+it back:
+
+```text
+{"id":"mend","title":"Mending","words":["mend gear"],"cost":{"money":5},"pay":"done","hold":20}
+
+SPEECH_PROG mend gear
+  if has($n 'a notched blade')
+    mpservice $n done mend
+  else
+    mpsay $n Nothing here I can mend.
+    mpservice $n refund mend
+  endif
+~
+```
+
+A hold the script never settles is given back after `hold` game ticks. With
+the default `"pay": "ask"` a script can still give the money back, once, with
+`MPSERVICE $n REFUND id`. JavaScript has `cm.serviceDone(npc, who, id)` and
+`cm.serviceRefund(npc, who, id)`. `SERVICES` shows "paid when done" and what is
+held for you; each payment, hold and refund is in the character's `LEDGER`,
+and each refusal is its last refused transition. Words said to the whole room ask no one: a service
 is asked for to the NPC, as `TALK`'s menu does.
 
 ### Topics: [[words]], ASK and hints

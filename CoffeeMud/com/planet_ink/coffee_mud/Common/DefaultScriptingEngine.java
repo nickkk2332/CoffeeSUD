@@ -16410,6 +16410,21 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				who.tell(L("[@x1 check: @x2]",label,ok?L("success"):L("failure")));
 			return ok?"true":"false";
 		}
+		case "POOL": // P08: POOL(organization pool): the units in an organization's shared pool, 0 for none
+		{
+			final List<String> w=CMParms.parse(varify(ctx,parms));
+			final com.planet_ink.coffee_mud.Common.interfaces.Clan C=(w.size()>=2)?CMLib.clans().findClan(CMParms.combine(w.subList(0,w.size()-1),0)):null;
+			if(C==null)
+				return "0";
+			try
+			{
+				return ""+OrgPools.units(C,w.get(w.size()-1));
+			}
+			catch(final java.io.IOException e)
+			{
+				return "0";
+			}
+		}
 		case "AFFINITY": // N15: AFFINITY(npc who [BAND]): the NPC's opinion of them, a number or its band
 		{
 			final Environmental N=getArgumentMOB(CMParms.getCleanBit(parms,0),ctx);
@@ -17613,6 +17628,49 @@ public class DefaultScriptingEngine implements ScriptingEngine
 				final Room R=where.equalsIgnoreCase("HERE")?lastKnownLocation:CMLib.map().getRoom(where);
 				if((R==null)||(!Checkpoints.set((MOB)W,R)))
 					logError(ctx,"MPSETRESPAWN","RunTime","no room with an id: "+where);
+			}
+			return null;
+		}
+		case "MPSERVICE": // P04: MPSERVICE who DONE|REFUND service: a held payment kept, or the latest payment given back
+		{
+			final Environmental W=getArgumentMOB(CMParms.getCleanBit(line,1),ctx);
+			final String what=varify(ctx,CMParms.getCleanBit(line,2)).trim().toUpperCase();
+			final String id=varify(ctx,CMParms.getPastBitClean(line,2)).trim();
+			if((!(W instanceof MOB))||(!(ctx.scripted instanceof MOB))||!(what.equals("DONE")||what.equals("REFUND"))||(id.length()==0))
+			{
+				logError(ctx,"MPSERVICE","Syntax","MPSERVICE who DONE|REFUND service, run by the NPC with the service: "+line);
+				return null;
+			}
+			try
+			{
+				((MOB)W).tell(what.equals("DONE")?Services.done((MOB)ctx.scripted,(MOB)W,id):Services.refund((MOB)ctx.scripted,(MOB)W,id));
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPSERVICE","RunTime",e.getMessage());
+			}
+			return null;
+		}
+		case "MPPOOL": // P08: MPPOOL organization ADD|SPEND pool n (what): units added to, or spent from, an organization's shared pool
+		{
+			final List<String> w=CMParms.parse(varify(ctx,CMParms.getPastBitClean(line,0)));
+			final String what=(w.size()>4)?CMParms.combine(w,4):"a script";
+			final com.planet_ink.coffee_mud.Common.interfaces.Clan C=(w.size()>0)?CMLib.clans().findClan(w.get(0)):null;
+			if((C==null)||(w.size()<4)||!(w.get(1).equalsIgnoreCase("ADD")||w.get(1).equalsIgnoreCase("SPEND"))||!CMath.isLong(w.get(3)))
+			{
+				logError(ctx,"MPPOOL","Syntax","MPPOOL organization ADD|SPEND pool n (what), an organization's name in quotes when it has spaces: "+line);
+				return null;
+			}
+			try
+			{
+				if(w.get(1).equalsIgnoreCase("ADD"))
+					OrgPools.add(C,w.get(2),CMath.s_long(w.get(3)),"a script",what);
+				else
+					OrgPools.spend(C,w.get(2),CMath.s_long(w.get(3)),"a script",what);
+			}
+			catch(final java.io.IOException e)
+			{
+				logError(ctx,"MPPOOL","RunTime",e.getMessage());
 			}
 			return null;
 		}

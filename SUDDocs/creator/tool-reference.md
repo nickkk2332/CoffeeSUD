@@ -503,7 +503,7 @@ A command to view the Administrative help commands.
 
 ## ALERTED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4415.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4416.
 
 ```text
 Property   : Alerted
@@ -5719,7 +5719,7 @@ them all.  The cheats are kept with the character (Prop_DevCheats).
 
 ## GOINGHOME
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4427.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4428.
 
 ```text
 Property   : GoingHome
@@ -7269,7 +7269,7 @@ SURPRISED, SPOTTED or AVOIDED runs on the room's scripts and its NPCs'.
 
 ## PROP_AREABANNER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4269.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4270.
 
 ```text
 Property   : Prop_AreaBanner
@@ -7290,7 +7290,7 @@ Prop_AreaEntry's keys (ENTER, FIRST, LEAVE, MASK, COLOR); see PROP_AREAENTRY.
 
 ## PROP_AREAENTRY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4254.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4255.
 
 ```text
 Property   : Prop_AreaEntry
@@ -7368,7 +7368,7 @@ attuned.
 
 ## PROP_AUTHORIDENTITY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4369.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4370.
 
 ```text
 Property   : Prop_AuthorIdentity
@@ -7431,7 +7431,7 @@ kept with it (LEFT=), and one on the other side of the exit is kept the same.
 
 ## PROP_BROKEN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4295.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4296.
 
 ```text
 Property   : Prop_Broken
@@ -7565,7 +7565,7 @@ conditions under which the object will no longer be visible.
 
 ## PROP_COMBATSTATS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4452.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4453.
 
 ```text
 Property   : Prop_CombatStats
@@ -7733,7 +7733,7 @@ name (or a mob class) comes out of the dark, LURK percent of the time (LURKMSG).
 
 ## PROP_DARKDESCRIPTION
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4210.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4211.
 
 ```text
 Property   : Prop_DarkDescription
@@ -7774,7 +7774,7 @@ with them, so the party stays together: a jailbreak instead of a reload.  MASK i
 
 ## PROP_DETAILS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4181.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4182.
 
 ```text
 Property   : Prop_Details
@@ -7961,7 +7961,7 @@ one who beat it gains the experience of a kill, unless NOXP.
 
 ## PROP_FACTIONEFFECTS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4316.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4317.
 
 ```text
 Property   : Prop_FactionEffects
@@ -7980,7 +7980,7 @@ give.
 
 ## PROP_FIRSTENTRY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4154.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4155.
 
 ```text
 Property   : Prop_FirstEntry
@@ -8002,7 +8002,7 @@ host; ALIASES and LEGACYKEYS name old IDs and tokens whose markers still count.
 
 ## PROP_FURNISHING
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2283.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2284.
 
 ```text
 Property   : Prop_Furnishing
@@ -8024,7 +8024,7 @@ PROP_WORKSTATION): ACTS=fire serves a craft that needs a fire.
 
 ## PROP_GENLOCK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2296.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2297.
 
 ```text
 Property   : Prop_GenLock
@@ -8338,7 +8338,7 @@ stage and the way to the next.
 
 ## PROP_ITEMMODIFIERS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4543.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4544.
 
 ```text
 Property   : Prop_ItemModifiers
@@ -8364,7 +8364,7 @@ currencies or staged choices.  See SUDDocs/creator/17-item-modifiers-crafting.md
 
 ## PROP_ITEMSET
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1705.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1706.
 
 ```text
 Property   : Prop_ItemSet
@@ -8460,7 +8460,7 @@ the destination room ID.
 
 ## PROP_JOURNEYPASSENGER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4339.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4340.
 
 ```text
 Property   : Prop_JourneyPassenger
@@ -8477,7 +8477,7 @@ Shown as nothing.  Not for builders to give.
 
 ## PROP_JOURNEYSTATE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4327.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4328.
 
 ```text
 Property   : Prop_JourneyState
@@ -8497,7 +8497,7 @@ settings are the way to steer a passage.
 
 ## PROP_JSCRIPT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1722.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1723.
 
 ```text
 Property   : Prop_JScript
@@ -8518,7 +8518,7 @@ ticks) (AHELP CATCHUP).  The other parameters are the file's parms, numbers as n
 
 ## PROP_KEYRULES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1736.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1737.
 
 ```text
 Property   : Prop_KeyRules
@@ -8539,7 +8539,7 @@ room; MASK: who may use it (MSG is told to the others).  A key's code may also b
 
 ## PROP_KNOWNRECIPES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1749.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1750.
 
 ```text
 Property   : Prop_KnownRecipes
@@ -8581,7 +8581,7 @@ happens.
 
 ## PROP_LANGUAGESPEAKER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1785.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1786.
 
 ```text
 Property   : Prop_LanguageSpeaker
@@ -8612,7 +8612,7 @@ zapper mask may follow a semicolon to add additional masks. <ZAP=disallow>
 
 ## PROP_LIMITEDCONTENTS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1809.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1810.
 
 ```text
 Property   : Prop_LimitedContents
@@ -8661,7 +8661,7 @@ Prop_SkyText overrides its own time-of-day text first.
 
 ## PROP_LOCKRULES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1882.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1883.
 
 ```text
 Property   : Prop_LockRules
@@ -8706,7 +8706,7 @@ resources/randareas/loot.xml has sample tables (goblin, chest).
 
 ## PROP_LORE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4168.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4169.
 
 ```text
 Property   : Prop_Lore
@@ -8727,7 +8727,7 @@ script gives one with MPLORE $n ADD [KEY] [PROFILE].  See HELP LORE.
 
 ## PROP_MAPGLYPH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4219.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4220.
 
 ```text
 Property   : Prop_MapGlyph
@@ -8744,7 +8744,7 @@ panel.  HIDE leaves the room off the map.  Unmappable rooms and areas remain exc
 
 ## PROP_MAPREVEAL
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4229.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4230.
 
 ```text
 Property   : Prop_MapReveal
@@ -8763,7 +8763,7 @@ Revealed rooms are dim on MAP under MAPFOG=KNOWN.
 
 ## PROP_MOBRANK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1994.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1995.
 
 ```text
 Property   : Prop_MobRank
@@ -8806,7 +8806,7 @@ Prop_LanguageSpeaker also accepts UNDERSTANDS=ONLY for its LANGUAGE.
 
 ## PROP_NOSAVE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2306.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2307.
 
 ```text
 Property   : Prop_NoSave
@@ -8823,7 +8823,7 @@ player is told MSG, or that they cannot save here.  On an area, it covers every 
 
 ## PROP_NPCLINES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2390.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2391.
 
 ```text
 Property   : Prop_NPCLines
@@ -8873,7 +8873,7 @@ copy.  See SUDDocs/creator/42-saved-choices.md.
 
 ## PROP_PARTYSCALER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2453.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2454.
 
 ```text
 Property   : Prop_PartyScaler
@@ -8915,7 +8915,7 @@ template's own name or gender; NAME=RANDOM draws a name.  It does nothing in pla
 
 ## PROP_PLAYTEST
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4306.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4307.
 
 ```text
 Property   : Prop_Playtest
@@ -8952,7 +8952,7 @@ Routes follow open exits and the vessel terrain rules.
 
 ## PROP_PRESSUREPLATE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2488.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2489.
 
 ```text
 Property   : Prop_PressurePlate
@@ -8977,7 +8977,7 @@ or stands on it.  Actions are script commands, as in Prop_Switch.  Scripts have 
 
 ## PROP_PRIVATEPROPERTY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2504.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2505.
 
 ```text
 Property   : Prop_PrivateProperty
@@ -8997,7 +8997,7 @@ given.  CoffeeSUD: OWNER="@PROFILE" is the whole profile, and every character of
 
 ## PROP_PURCHASES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4349.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4350.
 
 ```text
 Property   : Prop_Purchases
@@ -9014,7 +9014,7 @@ like can give back what each cost.  Not for builders to give or change.
 
 ## PROP_QUESTBOARD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2224.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2225.
 
 ```text
 Property   : Prop_QuestBoard
@@ -9041,7 +9041,7 @@ jobs are kept in a saved game with the board.
 
 ## PROP_QUESTGIVER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2518.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2519.
 
 ```text
 Property   : Prop_QuestGiver
@@ -9079,7 +9079,7 @@ OFFERED while the player may still take it, and QUESTS ACCEPT takes it on.
 
 ## PROP_QUESTITEM
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2243.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2244.
 
 ```text
 Property   : Prop_QuestItem
@@ -9099,7 +9099,7 @@ lists what the character carries for it.
 
 ## PROP_QUESTLOG
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2255.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2256.
 
 ```text
 Property   : Prop_QuestLog
@@ -9116,7 +9116,7 @@ that it is saved with the character.  QUESTS shows it.  Not for builders to give
 
 ## PROP_QUESTMARKER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2266.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2267.
 
 ```text
 Property   : Prop_QuestMarker
@@ -9158,7 +9158,7 @@ CoffeeSUD: a player may RECRUIT this NPC: if MASK lets them in and they pay COST
 
 ## PROP_REJUVWHEN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2551.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2552.
 
 ```text
 Property   : Prop_RejuvWhen
@@ -9219,7 +9219,7 @@ vehicles.
 
 ## PROP_ROOMDARK
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2937.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2938.
 
 ```text
 Property   : Prop_RoomDark
@@ -9242,7 +9242,7 @@ go dark while they are in it, but those that pass LIGHTMASK (a mask on the light
 
 ## PROP_ROOMFORSALE
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2952.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2953.
 
 ```text
 Property   : Prop_RoomForSale
@@ -9281,7 +9281,7 @@ See also Prop_ReqCapacity for the means to set limits on players building abilit
 
 ## PROP_ROOMVIEW
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3067.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3068.
 
 ```text
 Property   : Prop_RoomView
@@ -9303,7 +9303,7 @@ to view the rooms below.
 
 ## PROP_SALVAGEYIELD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2810.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2811.
 
 ```text
 Property   : Prop_SalvageYield
@@ -9328,7 +9328,7 @@ the materials its recipe uses, times the crafter's proficiency.
 
 ## PROP_SAVEPOINT
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2827.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 2828.
 
 ```text
 Property   : Prop_SavePoint
@@ -9345,7 +9345,7 @@ area, it covers every room in it.
 
 ## PROP_SENSES
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4199.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4200.
 
 ```text
 Property   : Prop_Senses
@@ -9372,7 +9372,7 @@ Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini),
 Property   : Prop_Service
 Targets    : MOBS
 Parameters : JSON: services, each id, title, words, mask, refusal, hours, station, cost
-({money} or {pool, units, org})
+({money} or {pool, units, org}), pay (ask or done), hold
 Example    :
 {"services":[{"id":"heal","title":"Healing","words":["heal"],"cost":{"money":10}}]}
 Description:
@@ -9381,16 +9381,17 @@ CoffeeSUD: the NPC's services, as one record.  A service may be had only within 
 (refused with its refusal) and only by those who can pay its cost: money, or units from a
 shared pool of their organization (a receipt in its ledger).  TALK's menu offers the ones
 one may have now and says why not the rest; SERVICES lists them; saying a word to the NPC is
- refused, before its scripts hear it, for the same reasons, and otherwise paid.  What the
-service does is the NPC's script answering the word.  See
-SUDDocs/creator/06-npcs-dialogue.md.
+ refused, before its scripts hear it, for the same reasons, and otherwise paid: at once (pay
+ ask), or held until the NPC's script says MPSERVICE $n DONE id and given back on REFUND or
+after hold ticks (pay done). What the service does is the NPC's script answering the word.
+See SUDDocs/creator/06-npcs-dialogue.md.
 ```
 
 <a id="prop-showwhen"></a>
 
 ## PROP_SHOWWHEN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4240.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4241.
 
 ```text
 Property   : Prop_ShowWhen
@@ -9458,7 +9459,7 @@ ORGANIZATIONS.
 
 ## PROP_STORYRECORDS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4359.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4360.
 
 ```text
 Property   : Prop_StoryRecords
@@ -9476,7 +9477,7 @@ character.  Not for builders to give or edit.
 
 ## PROP_SUMMONED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3378.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3379.
 
 ```text
 Property   : Prop_Summoned
@@ -9494,7 +9495,7 @@ summoner is the caster, or after a restore the mob it follows.
 
 ## PROP_SURPRISED
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3097.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3098.
 
 ```text
 Property   : Prop_Surprised
@@ -9510,7 +9511,7 @@ CoffeeSUD: caught by surprise (Prop_Ambush puts it on): for TICKS rounds the mob
 
 ## PROP_SWITCH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3389.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3390.
 
 ```text
 Property   : Prop_Switch
@@ -9539,7 +9540,7 @@ state is kept in the property's text (STATE=), so saves and world files keep it.
 
 ## PROP_TELEGRAPH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3454.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3455.
 
 ```text
 Property   : Prop_Telegraph
@@ -9571,7 +9572,7 @@ its target when the time is up.
 
 ## PROP_TICKETTAKER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3475.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3476.
 
 ```text
 Property   : Prop_TicketTaker
@@ -9630,7 +9631,7 @@ before comes back, unless RESTORE=FALSE.  ONLYCOMBAT holds it only while one fig
 
 ## PROP_TRAINER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3491.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3492.
 
 ```text
 Property   : Prop_Trainer
@@ -9662,7 +9663,7 @@ teacher offers them.
 
 ## PROP_TRANSFORM
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3511.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3512.
 
 ```text
 Property   : Prop_Transform
@@ -9692,7 +9693,7 @@ becomes may have a Prop_Transform of its own.
 
 ## PROP_TRANSITVIEW
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4380.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4381.
 
 ```text
 Property   : Prop_TransitView
@@ -9727,7 +9728,7 @@ another time charge. The scheduler runs weather, hunger, NPCs and scripts during
 
 ## PROP_TWEAKWATCH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4389.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4390.
 
 ```text
 Property   : Prop_TweakWatch
@@ -9745,7 +9746,7 @@ give.
 
 ## PROP_UNKNOWN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1648.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 1649.
 
 ```text
 Property   : Prop_Unknown
@@ -9768,7 +9769,7 @@ or appraising again changes nothing.
 
 ## PROP_UPGRADEPATH
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3593.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3594.
 
 ```text
 Property   : Prop_UpgradePath
@@ -9786,7 +9787,7 @@ without FROM.  See BEHAVIOR_ITEMUPGRADER.
 
 ## PROP_VERBS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4282.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4283.
 
 ```text
 Property   : Prop_Verbs
@@ -9833,7 +9834,7 @@ charged once, after every passenger passes entry checks.
 
 ## PROP_WEAPONIMMUNITY
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3765.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3766.
 
 ```text
 Property   : Prop_WeaponImmunity
@@ -9936,7 +9937,7 @@ local/global fallbacks. Both fields are in MODIFY RACE.
 
 ## PROP_WEARRESISTER
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3897.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3898.
 
 ```text
 Property   : Prop_WearResister
@@ -9977,7 +9978,7 @@ properties. Each property keeps its own threshold; the default is two pieces.
 
 ## PROP_WHEN
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3997.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 3998.
 
 ```text
 Property   : Prop_When
@@ -10006,7 +10007,7 @@ ONCE=WORLD are.
 
 ## PROP_WORKSTATION
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4014.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4015.
 
 ```text
 Property   : Prop_Workstation
@@ -10031,7 +10032,7 @@ recipes with its STATION field.
 
 ## PROP_YIELD
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4028.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4029.
 
 ```text
 Property   : Prop_Yield
@@ -10074,7 +10075,7 @@ deferred.
 
 ## QUESTBOUND
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4051.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4052.
 
 ```text
 Property   : QuestBound
@@ -11882,7 +11883,7 @@ information on command usage.  CoffeeSUD: DESTROY BEHAVIOR [ID] removes a generi
 
 ## TEMPORARYAFFECTS
 
-Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4094.
+Source: [arc_properties.ini](../../CoffeeMud/resources/help/arc_properties.ini), line 4095.
 
 ```text
 Property   : Temporary Affects

@@ -4238,7 +4238,8 @@ CoffeeSUD addition. Gives the host text for the senses other than sight. `LISTEN
 
 ```text
 {"services": [{"id", "title", "words": [...], "mask", "refusal", "hours": "from-to",
-  "station", "cost": {"money": n} or {"pool": id, "units": n, "org": name}}]}
+  "station", "cost": {"money": n} or {"pool": id, "units": n, "org": name},
+  "pay": "ask" or "done", "hold": ticks}]}
 ```
 
 **Example:**
@@ -4268,7 +4269,14 @@ names it; without it, their first organization).
   ledger. Words said to the room ask no one.
 
 What the service does is the NPC's own: its script answers the word (a
-`SPEECH_PROG`), as it would without the record. A record that cannot be read
+`SPEECH_PROG`), as it would without the record. With `"pay": "ask"` (the
+default) the cost is kept when the word is said; with `"pay": "done"` it is
+held, kept only when the NPC's script says `MPSERVICE $n DONE id`, and given
+back if the script says `MPSERVICE $n REFUND id` or `hold` game ticks (30 by
+default) pass first. `MPSERVICE $n REFUND id` also gives back a kept payment,
+once. The last 16 payments are kept in the record itself (`payments`), so a
+hold survives a save; a hold whose payer is not in the game when it runs out
+is given back when they are. A record that cannot be read
 offers nothing; `PROPCHECK` says why. `WORLD CHECK ONLY=REFS` follows each
 service's pool, organization and workstation (which must be in the NPC's room),
 and reports a service whose words nothing on the NPC answers, since asking for it

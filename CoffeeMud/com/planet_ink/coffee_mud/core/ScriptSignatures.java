@@ -144,6 +144,8 @@ final class ScriptSignatures
         add("MPDIRECTOR", 1, true);
         add("MPRECORD", 4, true);
         add("MPCULTURE", 2, true);
+        add("MPSERVICE", 3, true);
+        add("MPPOOL", 4, true);
         add("MPQJOURNAL", 2, true);
         add("MPQOBJECTIVE", 3, true);
         add("MPQTIMER", 2, true);

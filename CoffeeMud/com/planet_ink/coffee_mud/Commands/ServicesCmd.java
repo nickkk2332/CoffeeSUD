@@ -21,8 +21,10 @@ import java.util.*;
 */
 /**
  * P04 and P08: SERVICES lists the services of those here (core/Services);
- * POOLS shows one's organizations' shared pools, and POOLS GIVE [n] [pool]
- * (TO [organization]) gives to one (core/OrgPools).
+ * POOLS shows one's organizations' shared pools, POOLS GIVE [n] [pool]
+ * (TO [organization]) gives to one, and POOLS TAKE [n] [pool] (FROM
+ * [organization]) takes from one, for the ranks its TAKERS name
+ * (core/OrgPools).
  */
 public class ServicesCmd extends StdCommand
 {
@@ -63,11 +65,24 @@ public class ServicesCmd extends StdCommand
 				mob.tell(OrgPools.give(mob,C,words.get(3),CMath.s_long(words.get(2))));
 			}
 			else
+			if((words.size()>=4)&&words.get(1).equalsIgnoreCase("TAKE"))
+			{
+				Clan C=null;
+				if(words.size()>5&&words.get(4).equalsIgnoreCase("FROM"))
+					C=CMLib.clans().findClan(CMParms.combine(words,5));
+				else
+					C=Organizations.firstClan(mob);
+				if(C==null)
+					throw new java.io.IOException("take from an organization you are in: POOLS TAKE [n] [pool] (FROM [organization])");
+				mob.tell(OrgPools.take(mob,C,words.get(3),CMath.s_long(words.get(2))));
+			}
+			else
 				mob.tell(OrgPools.show(mob));
 		}
 		catch(final java.io.IOException e)
 		{
 			mob.tell("Pools: "+e.getMessage());
+			Provenance.refused(mob,OrgPools.FAMILY,"POOLS",e.getMessage(),"POOLS shows what each pool holds and who may give or take");
 		}
 		return false;
 	}

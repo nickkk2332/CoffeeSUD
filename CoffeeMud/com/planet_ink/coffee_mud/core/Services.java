@@ -51,10 +51,19 @@ public final class Services
 		public final List<String>	words;
 		public final int			from, to;
 		public final long			money, units;
+		/** when its cost is kept: on asking ("ask"), or held on asking and kept only when the NPC's script says DONE ("done") */
+		public final boolean		onDone;
+		/** how many game ticks a "done" service's hold waits for DONE before it is returned */
+		public final int			hold;
 
 		Service(final JSONObject o) throws IOException
 		{
-			ModuleDefinitions.keys(o, "service", "id", "title", "words", "mask", "refusal", "hours", "station", "cost");
+			ModuleDefinitions.keys(o, "service", "id", "title", "words", "mask", "refusal", "hours", "station", "cost", "pay", "hold");
+			final String payWhen = o.containsKey("pay") ? ModuleDefinitions.string(o.get("pay"), "pay").toLowerCase(Locale.ROOT) : "ask";
+			if(!payWhen.equals("ask") && !payWhen.equals("done"))
+				throw new IOException("pay is ask or done");
+			onDone = payWhen.equals("done");
+			hold = o.containsKey("hold") ? (int)Math.min(100000, ModuleDefinitions.count(o.get("hold"), "hold")) : 30;
 			id = ModuleDefinitions.id(o.get("id"));
 			title = o.containsKey("title") ? ModuleDefinitions.string(o.get("title"), "title") : id;
 			final List<String> w = new ArrayList<String>();
@@ -173,6 +182,9 @@ public final class Services
 				return CMLib.lang().L("only for members of @x1", s.org.isEmpty() ? "an organization" : s.org);
 			try
 			{
+				final String rank = OrgPools.whyNotSpend(who, C, s.pool);
+				if(!rank.isEmpty())
+					return rank;
 				if(OrgPools.units(C, s.pool) < s.units)
 					return CMLib.lang().L("@x1's @x2 holds too little", C.getName(), s.pool.toLowerCase(Locale.ROOT));
 			}
@@ -199,25 +211,235 @@ public final class Services
 		return null;
 	}
 
-	/** the service is given: its cost paid; @return what to tell them */
+	/**
+	 * The service is asked for: its cost is taken.  Kept at once ("ask"), or
+	 * held ("done") until the NPC's script says DONE, and given back if it
+	 * says REFUND or the hold runs out.  Each payment is kept in the record
+	 * (the last 16), so a script can give back the latest.
+	 * @return what to tell them
+	 */
 	public static String pay(final MOB who, final MOB npc, final Service s) throws IOException
 	{
 		ModuleStats.count(FAMILY, s.id, "given");
+		final JSONObject entry = new JSONObject();
+		entry.put("who", who.Name());
+		entry.put("id", s.id);
+		entry.put("state", s.onDone ? "held" : "paid");
+		entry.put("at", Long.valueOf(GameTime.now()));
+		if(s.onDone)
+			entry.put("until", Long.valueOf(GameTime.now() + ((long)s.hold * CMProps.getTickMillis())));
+		String said = "";
 		if(s.money > 0)
 		{
 			final String cur = CMLib.beanCounter().getCurrency(npc);
 			CMLib.beanCounter().subtractMoney(who, cur, s.money);
-			return CMLib.lang().L("You pay @x1 for @x2.", CMLib.beanCounter().nameCurrencyShort(cur, s.money), s.title);
+			entry.put("money", Long.valueOf(s.money));
+			entry.put("currency", cur);
+			said = s.onDone ? CMLib.lang().L("You hand over @x1 for @x2; it is held until it is done.", CMLib.beanCounter().nameCurrencyShort(cur, s.money), s.title)
+							: CMLib.lang().L("You pay @x1 for @x2.", CMLib.beanCounter().nameCurrencyShort(cur, s.money), s.title);
 		}
+		else
 		if(!s.pool.isEmpty())
 		{
 			final Clan C = orgFor(who, s);
 			if(C == null)
 				throw new IOException("only for members of " + (s.org.isEmpty() ? "an organization" : s.org));
 			final long receipt = OrgPools.spend(C, s.pool, s.units, who.Name(), s.title);
-			return CMLib.lang().L("@x1's @x2 pays @x3 for @x4 (receipt #@x5).", C.getName(), s.pool.toLowerCase(Locale.ROOT), "" + s.units, s.title, "" + receipt);
+			OrgPools.note(who, C, "spent", s.pool, s.units, receipt);
+			entry.put("org", C.getName());
+			entry.put("pool", s.pool);
+			entry.put("units", Long.valueOf(s.units));
+			entry.put("receipt", Long.valueOf(receipt));
+			said = CMLib.lang().L("@x1's @x2 pays @x3 for @x4 (receipt #@x5)@x6.", C.getName(), s.pool.toLowerCase(Locale.ROOT), "" + s.units, s.title, "" + receipt,
+				s.onDone ? CMLib.lang().L("; it is held until it is done") : "");
 		}
-		return "";
+		Provenance.event(who, FAMILY, npc.Name() + " " + s.id, (s.onDone ? "held " : "paid ") + (s.cost(npc).isEmpty() ? "nothing" : s.cost(npc)) + " for " + s.title);
+		if(entry.containsKey("money") || entry.containsKey("pool") || s.onDone)
+			keep(npc, entry);
+		return said;
+	}
+
+	/** the record's root, to keep payments in */
+	private static JSONObject root(final MOB npc) throws IOException
+	{
+		final Ability A = npc.fetchEffect(PROPERTY);
+		if(A == null)
+			throw new IOException(npc.Name() + " keeps no service records");
+		return ModuleDefinitions.parse(A.text());
+	}
+
+	private static List<JSONObject> payments(final JSONObject root) throws IOException
+	{
+		final List<JSONObject> out = new ArrayList<JSONObject>();
+		if(root.containsKey("payments"))
+		{
+			for(final Object o : ModuleDefinitions.array(root.get("payments"), "payments"))
+				out.add((JSONObject)o);
+		}
+		return out;
+	}
+
+	private static void store(final MOB npc, final JSONObject root, final List<JSONObject> pays)
+	{
+		while(pays.size() > 16)
+			pays.remove(0);
+		root.put("payments", pays.toArray());
+		npc.fetchEffect(PROPERTY).setMiscText(ModuleDefinitions.json(root));
+	}
+
+	private static void keep(final MOB npc, final JSONObject entry) throws IOException
+	{
+		final JSONObject root = root(npc);
+		final List<JSONObject> pays = payments(root);
+		pays.add(entry);
+		store(npc, root, pays);
+	}
+
+	/** the latest payment of someone for a service in one of these states, or null */
+	private static JSONObject latest(final List<JSONObject> pays, final String who, final String id, final String... states)
+	{
+		for(int i = pays.size() - 1; i >= 0; i--)
+		{
+			final JSONObject p = pays.get(i);
+			if(String.valueOf(p.get("who")).equalsIgnoreCase(who) && String.valueOf(p.get("id")).equalsIgnoreCase(id) && Arrays.asList(states).contains(String.valueOf(p.get("state"))))
+				return p;
+		}
+		return null;
+	}
+
+	/** gives a payment back: the money to its payer, or the units to the pool with a receipt */
+	private static String giveBack(final MOB npc, final JSONObject p, final MOB payer, final String why) throws IOException
+	{
+		String back = "";
+		if(p.get("money") instanceof Number)
+		{
+			if(payer == null)
+				throw new IOException(p.get("who") + " is not here to take the money back");
+			final String cur = String.valueOf(p.get("currency"));
+			final double amt = ((Number)p.get("money")).doubleValue();
+			CMLib.beanCounter().giveSomeoneMoney(payer, cur, amt);
+			back = CMLib.beanCounter().nameCurrencyShort(cur, amt);
+		}
+		else
+		if(p.get("units") instanceof Number)
+		{
+			final Clan C = CMLib.clans().getClan(String.valueOf(p.get("org")));
+			if(C == null)
+				throw new IOException("no organization " + p.get("org") + " to give back to");
+			final long n = ((Number)p.get("units")).longValue();
+			final long receipt = OrgPools.refund(C, String.valueOf(p.get("pool")), n, String.valueOf(p.get("who")), "refund of #" + p.get("receipt"));
+			OrgPools.note(payer, C, "refunded", String.valueOf(p.get("pool")), n, receipt);
+			back = CMLib.lang().L("@x1 unit(s) to @x2's @x3 (receipt #@x4)", "" + n, C.getName(), String.valueOf(p.get("pool")).toLowerCase(Locale.ROOT), "" + receipt);
+		}
+		p.put("state", "refunded");
+		ModuleStats.count(FAMILY, String.valueOf(p.get("id")), "refunds");
+		if(payer != null)
+		{
+			Provenance.event(payer, FAMILY, npc.Name() + " " + p.get("id"), "refunded " + (back.isEmpty() ? "nothing" : back) + " (" + why + ")");
+			payer.tell(CMLib.lang().L("@x1 gives back @x2 for @x3 (@x4).", npc.name(payer), back.isEmpty() ? CMLib.lang().L("nothing") : back, title(npc, String.valueOf(p.get("id"))), why));
+		}
+		return back;
+	}
+
+	private static String title(final MOB npc, final String id)
+	{
+		for(final Service s : of(npc))
+		{
+			if(s.id.equalsIgnoreCase(id))
+				return s.title;
+		}
+		return id;
+	}
+
+	/** the payer, if they are in the game: in the NPC's room, or a player anywhere */
+	private static MOB present(final MOB npc, final String name)
+	{
+		if(npc.location() != null)
+		{
+			for(int i = 0; i < npc.location().numInhabitants(); i++)
+			{
+				final MOB M = npc.location().fetchInhabitant(i);
+				if((M != null) && M.Name().equalsIgnoreCase(name))
+					return M;
+			}
+		}
+		final MOB M = CMLib.players().getPlayer(name);
+		return ((M != null) && !M.amDestroyed()) ? M : null;
+	}
+
+	/** MPSERVICE who DONE id: a held payment is kept; @return what happened */
+	public static String done(final MOB npc, final MOB who, final String id) throws IOException
+	{
+		final JSONObject root = root(npc);
+		final List<JSONObject> pays = payments(root);
+		final JSONObject p = latest(pays, who.Name(), id, "held");
+		if(p == null)
+			throw new IOException("no held payment of " + who.Name() + " for " + id);
+		p.put("state", "paid");
+		store(npc, root, pays);
+		Provenance.event(who, FAMILY, npc.Name() + " " + id, "kept the held payment for " + title(npc, id));
+		return CMLib.lang().L("@x1 is done; the payment is kept.", title(npc, id));
+	}
+
+	/** MPSERVICE who REFUND id: the latest payment (held or kept) is given back; @return what happened */
+	public static String refund(final MOB npc, final MOB who, final String id) throws IOException
+	{
+		final JSONObject root = root(npc);
+		final List<JSONObject> pays = payments(root);
+		final JSONObject p = latest(pays, who.Name(), id, "held", "paid");
+		if(p == null)
+			throw new IOException("no payment of " + who.Name() + " for " + id + " to give back");
+		giveBack(npc, p, who, CMLib.lang().L("refunded"));
+		store(npc, root, pays);
+		return CMLib.lang().L("@x1 is refunded.", title(npc, id));
+	}
+
+	/** holds past their time are given back (the NPC's ticks); a payer not in the game now is given back when they are */
+	public static void expire(final MOB npc)
+	{
+		final Ability A = npc.fetchEffect(PROPERTY);
+		if((A == null) || (A.text().indexOf("\"held\"") < 0))
+			return;
+		try
+		{
+			final JSONObject root = root(npc);
+			final List<JSONObject> pays = payments(root);
+			boolean changed = false;
+			for(final JSONObject p : pays)
+			{
+				if(!"held".equals(p.get("state")) || !(p.get("until") instanceof Number) || (((Number)p.get("until")).longValue() > GameTime.now()))
+					continue;
+				final MOB payer = present(npc, String.valueOf(p.get("who")));
+				if((payer == null) && (p.get("money") instanceof Number))
+					continue;
+				giveBack(npc, p, payer, CMLib.lang().L("it was not done in time"));
+				changed = true;
+			}
+			if(changed)
+				store(npc, root, pays);
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("Services", npc.Name() + ": " + e.getMessage());
+		}
+	}
+
+	/** someone's held payments at an NPC, in words, for SERVICES and LEDGER */
+	public static List<String> held(final MOB npc, final MOB who)
+	{
+		final List<String> out = new ArrayList<String>();
+		try
+		{
+			for(final JSONObject p : payments(root(npc)))
+			{
+				if("held".equals(p.get("state")) && String.valueOf(p.get("who")).equalsIgnoreCase(who.Name()))
+					out.add(title(npc, String.valueOf(p.get("id"))) + " at " + npc.Name());
+			}
+		}
+		catch(final IOException e)
+		{
+		}
+		return out;
 	}
 
 	/** TALK's menu choices for the services one may have now */
@@ -262,8 +484,11 @@ public final class Services
 				{
 					final String why = why(who, npc, v);
 					s.append("\n  ").append(v.title).append(" - say ").append(v.words.get(0)).append(v.cost(npc).isEmpty() ? "" : "; " + v.cost(npc))
+						.append(v.onDone ? "; paid when done" : "")
 						.append((v.from >= 0) ? "; open " + v.from + "-" + v.to : "").append(why.isEmpty() ? "; you may" : "; not now: " + why);
 				}
+				for(final String h : held(npc, who))
+					s.append("\n  Held for you: ").append(h);
 			}
 		}
 		return (s.length() == 0) ? CMLib.lang().L("No one here offers services.") : s.toString();
