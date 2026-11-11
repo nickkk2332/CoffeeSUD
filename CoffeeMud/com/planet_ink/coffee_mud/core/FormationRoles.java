@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.planet_ink.coffee_mud.Common.interfaces.CMMsg;
+import com.planet_ink.coffee_mud.Common.interfaces.Session;
 import com.planet_ink.coffee_mud.Common.interfaces.Tattoo;
 import com.planet_ink.coffee_mud.Locales.interfaces.Room;
 import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
@@ -230,7 +231,7 @@ public final class FormationRoles
 	public static String round(final MOB M)
 	{
 		final Origin R = of(M);
-		if((R == null) || (M.location() == null) || !M.isInCombat())
+		if((R == null) || (M.location() == null) || !M.isInCombat() || played(M))
 			return "";
 		final Set<MOB> group = group(M);
 		final List<MOB> foes = foes(M, group);
@@ -291,6 +292,20 @@ public final class FormationRoles
 			}
 		}
 		return String.join("; ", did);
+	}
+
+	/**
+	 * Whether someone is playing a member: the character at the terminal, or
+	 * one in a window of its own.  Its role waits, so it fights whom it is told
+	 * to; a party character no one is playing (SWITCH away from it) and an NPC
+	 * follower are left to their roles.
+	 * @param M the member
+	 * @return true if it is being played
+	 */
+	public static boolean played(final MOB M)
+	{
+		final Session S = M.session();
+		return (S != null) && !"PartySession".equals(S.ID());
 	}
 
 	/** why a role's TARGET picked a foe, in words, for COMBATDEBUG */

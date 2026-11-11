@@ -395,6 +395,11 @@ Each round of a fight, before its attacks, a member with a role reacts and
 picks its foe: an interception, a fall back or a return is shown to the room; a
 change of foe is quiet, but `COMBATDEBUG` explains each choice ("role Archer:
 turns on the goblin from the ogre (the most wounded foe, 40% hit points)"). A guard that has just drawn an attacker fights that attacker.
+A role acts only for a member no one is playing: an NPC follower, or a party
+character other than the one at the terminal. The character you play (and one
+in a window of its own) fights whom you tell it to; `SWITCH` to a party
+character and its role waits, `SWITCH` away and the role takes over again.
+Members keep their roles and rows when the leader travels.
 `WORLD CHECK` names an unknown `TARGET`, a `GUARDS` that names no role, and a
 `ROW`, `INTERCEPT` or `FALLBACK` that is no number.
 
