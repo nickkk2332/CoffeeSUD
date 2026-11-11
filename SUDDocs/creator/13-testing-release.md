@@ -963,8 +963,12 @@ into `input-DATE-TIME.play`.
 The file is a starting point for a `.play` test: delete the lines you do not
 want, then add `#expect` and `#assert` lines (see
 [World tests](#world-tests)). Edit sensitive or incidental input before
-sharing. A recording plus a fixed seed is not an exact deterministic session
-replay; that dedicated feature (`DETERMINISTIC=1`) remains deferred.
+sharing. In turn-based time (`TIMEMODE=TURNS`) a recording plus a fixed seed
+plays the same game again, in this build or a later one that changed nothing
+the recording touches: things tick in the order they came into the game, not
+in an order the build happens to give them. In real time the moment each line
+arrives still matters, so it is not an exact replay; that dedicated feature
+(`DETERMINISTIC=1`) remains deferred.
 
 ### NOTE and NOTES
 
