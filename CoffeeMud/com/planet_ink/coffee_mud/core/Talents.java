@@ -102,8 +102,6 @@ public final class Talents
 		{
 			if(t.lore.isEmpty())
 				out.add("talents.ini: " + t.id + ": LORE names no lore, so it would awaken at once");
-			if((t.ability.length() > 0) && (CMClass.getAbility(t.ability) == null))
-				out.add("talents.ini: " + t.id + ": no ability " + t.ability);
 		}
 		return out;
 	}

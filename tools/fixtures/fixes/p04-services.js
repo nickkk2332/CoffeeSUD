@@ -89,8 +89,20 @@ try {
 	out = said();
 	check("money-short", out.indexOf("Healing: not now, it costs") >= 0 && money(P) == 0, out);
 
-	// a record that cannot be read offers nothing, and says why
+	// WORLD CHECK follows the records: the pool exists; no anvil in the healer's room; nothing answers the words but heal's
+	// (the check reads the NPCs of the map's rooms; the test's own room is on no map)
+	M.location().bringMobHere(healer, false);
+	scriptOn(healer, "SPEECH_PROG heal mend\nmpecho The healer's hands glow.\n~\n");
+	var refs = s(CM.core.CrossRefs.errors());
+	check("refs", refs.indexOf("Fixp04 Healer: /Prop_Service/services/4/station: its room has no workstation anvil") >= 0
+		&& refs.indexOf("answers 'bless'") >= 0 && refs.indexOf("answers 'heal'") < 0 && refs.indexOf("/cost/pool") < 0, refs);
+	A.setMiscText(JSON.stringify({ services: [{ id: "lodging", title: "Lodging", words: ["lodge"], cost: { pool: "NOSUCHPOOL", units: 1 } }] }));
+	refs = s(CM.core.CrossRefs.errors());
+	check("refs-pool", refs.indexOf("/Prop_Service/services/0/cost/pool: no shared pool NOSUCHPOOL in orgpools.ini") >= 0, refs);
+	// a record that cannot be read offers nothing, and says why; PROPCHECK reads it as the game will
 	A.setMiscText('{"services":[{"id":"bad"}]}');
+	var pc = s(CM.core.PropCheck.checkHost(healer));
+	check("propcheck", pc.indexOf("its service records cannot be read: ") >= 0, pc);
 	check("unreadable", SV.of(healer).size() == 0 && s(A.accountForYourself()).indexOf("cannot be read") >= 0, s(A.accountForYourself()));
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) m.destroy(); });

@@ -100,11 +100,6 @@ public final class Affiliations
 		{
 			r.problems.add("affiliations.ini: " + e.getMessage());
 		}
-		for(final String org : r.tags.keySet())
-		{
-			if(CMLib.clans().getClan(org) == null)
-				r.problems.add("affiliations.ini: TAG names no organization " + org);
-		}
 		return r;
 	}
 

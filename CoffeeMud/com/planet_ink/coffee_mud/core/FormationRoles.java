@@ -350,9 +350,6 @@ public final class FormationRoles
 			final String t = R.get("TARGET").toUpperCase(Locale.ROOT);
 			if(!t.isEmpty() && !TARGETS.contains(t))
 				out.add("formations.ini [" + R.id + "]: TARGET is one of " + String.join(", ", TARGETS) + ", not " + t);
-			final String g = R.get("GUARDS");
-			if(!g.isEmpty() && !g.equalsIgnoreCase("LEADER") && (find(g) == null))
-				out.add("formations.ini [" + R.id + "]: GUARDS names no role " + g);
 			for(final String k : new String[] { "ROW", "INTERCEPT", "FALLBACK" })
 			{
 				if(!R.get(k).isEmpty() && !CMath.isInteger(R.get(k)))

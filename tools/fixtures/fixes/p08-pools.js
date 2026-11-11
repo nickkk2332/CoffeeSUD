@@ -22,8 +22,9 @@ try {
 	Files.write(new java.io.File(root, "orgpools.ini").toPath(), new java.lang.String(
 		'SUPPLIES=TITLE="Supplies" MAX=10 MONEY=5\nORE=TITLE="Ore stock" MAX=50 MATERIAL=IRON\nEMPTY=TITLE="Nothing"\nODD=TITLE="Odd" MATERIAL=NOSUCHSTUFF\n').getBytes("UTF-8"));
 	WorldFiles.configure(root);
-	var probs = s(OP.problems());
-	check("problems", probs.indexOf("EMPTY: no one can give to it") >= 0 && probs.indexOf("ODD: no registered material NOSUCHSTUFF") >= 0, probs);
+	var probs = s(OP.problems()), refs = s(CM.core.CrossRefs.errors());
+	check("problems", probs.indexOf("EMPTY: no one can give to it") >= 0 && refs.indexOf("orgpools.ini: ODD/MATERIAL: no registered material NOSUCHSTUFF") >= 0
+		&& refs.indexOf("orgpools.ini: ORE") < 0, probs + " / " + refs);
 	var order = makeOrg("Fixp08 Order");
 	var P = person("Fixp08 Pip"), Q = person("Fixp08 Quill");
 	var VS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });

@@ -116,11 +116,6 @@ public final class Challenges
 		final List<String> out = new ArrayList<String>();
 		for(final Book b : books().values())
 		{
-			for(final String t : b.named)
-			{
-				if(CMLib.achievements().getAchievement(t) == null)
-					out.add("challenges.ini: " + b.id + ": no achievement " + t);
-			}
 			if(b.entries().isEmpty())
 				out.add("challenges.ini: " + b.id + ": the book has no entries");
 		}

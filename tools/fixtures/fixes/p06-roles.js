@@ -20,9 +20,9 @@ try {
 		+ "[SHIELD]\nNAME=Shield-bearer\nROW=1\nGUARDS=ARCHER\nINTERCEPT=100\n"
 		+ "[ODD]\nTARGET=SIDEWAYS\nGUARDS=NOBODY\nROW=far\n").getBytes("UTF-8"));
 	WorldFiles.configure(root);
-	var probs = s(FR.problems());
-	check("problems", probs.indexOf("[ODD]: TARGET is one of") >= 0 && probs.indexOf("not SIDEWAYS") >= 0 && probs.indexOf("GUARDS names no role NOBODY") >= 0
-		&& probs.indexOf("ROW is a number, not far") >= 0, probs);
+	var probs = s(FR.problems()), refs = s(CM.core.CrossRefs.errors());
+	check("problems", probs.indexOf("[ODD]: TARGET is one of") >= 0 && probs.indexOf("not SIDEWAYS") >= 0 && probs.indexOf("ROW is a number, not far") >= 0
+		&& refs.indexOf("formations.ini: [ODD]/GUARDS: no role NOBODY in formations.ini") >= 0 && refs.indexOf("formations.ini: [SHIELD]") < 0, probs + " / " + refs);
 	var L = body("Fixp06lead", 100);
 	var VS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });
 	VS.initialize(null, "MEMORY"); L.setSession(VS); VS.setMob(L); L.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));

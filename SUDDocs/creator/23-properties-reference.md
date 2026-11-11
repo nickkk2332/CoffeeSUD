@@ -4269,7 +4269,10 @@ names it; without it, their first organization).
 
 What the service does is the NPC's own: its script answers the word (a
 `SPEECH_PROG`), as it would without the record. A record that cannot be read
-offers nothing; the property's description (`STAT`, `PROPCHECK`) says why.
+offers nothing; `PROPCHECK` says why. `WORLD CHECK ONLY=REFS` follows each
+service's pool, organization and workstation (which must be in the NPC's room),
+and reports a service whose words nothing on the NPC answers, since asking for it
+would pay for nothing.
 See [09 Shared pools](09-society.md#shared-pools) and
 [06 Service records](06-npcs-dialogue.md#service-records).
 Test: [p04-services.js](../../tools/fixtures/fixes/p04-services.js).

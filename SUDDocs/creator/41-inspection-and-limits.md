@@ -33,8 +33,18 @@ definition and follows what it names in another family or in the world:
 | A track | the skill of each `cast` earning rule |
 | A loot policy | its modifier base |
 | The item modifier library | each base's pool affixes and successor, each operation's affixes, each recipe's catalog product and its base or policy |
+| `cultures.ini`, `origins.ini` | a culture's abilities; an origin's `CULTURE` |
+| `talents.ini` | each talent's lore entries and its ability |
+| `challenges.ini` | the achievements a book names |
+| `formations.ini` | the role a role `GUARDS` |
+| `orgpools.ini` | a pool's `MATERIAL` |
+| `affiliations.ini` | the organizations its `TAG`, `KEEP` and `LEAVE` lines name, and the abilities `LEAVE` takes |
+| A service record (`Prop_Service`) on an NPC in the world or the catalog | each service's pool and organization; its workstation, which must be in the NPC's room; and whether something on the NPC answers its words (a `SPEECH_PROG` naming one of them, or `ALL`) |
+| An offer book (`Prop_OfferBook`) on a mob or item in the world or the catalog | its catalog items |
 
-Each broken reference is reported where it is written, as file and JSON path:
+Each broken reference is reported where it is written, as file and JSON path
+(for the world files, the file and the entry; for a record on a mob or item, its
+room or catalog entry and the record's path):
 
 ```text
 References between the module families: 38 followed, 27 found, 10 broken, 1 unknown.
@@ -45,7 +55,10 @@ UNKNOWN directors/fix.scripted.v1.json: /phases/0/spawn/0/mob: 'a fixq02 scripte
 ```
 
 What the check cannot see into is **unknown**, not passed or failed: a catalog
-mob or item that carries scripts, an expedition generator that runs scripts. In
+mob or item that carries scripts, an expedition generator that runs scripts, an
+NPC whose scripts are loaded from files or run JavaScript (whether they answer a
+service's word), a catalog NPC's workstation (it has no room until placed).
+A service record that cannot be read at all is broken, and `PROPCHECK` says why. In
 `WORLD CHECK`, a broken reference is an error in a world that selects the
 family it is written in, and a warning otherwise; an unknown is a warning.
 

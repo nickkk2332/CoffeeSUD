@@ -88,8 +88,6 @@ public final class OrgPools
 		{
 			if((k.money <= 0) && k.material.isEmpty())
 				out.add("orgpools.ini: " + k.id + ": no one can give to it (MONEY or MATERIAL)");
-			if(!k.material.isEmpty() && (com.planet_ink.coffee_mud.Items.interfaces.RawMaterial.CODES.FIND_CaseSensitive(k.material) < 0))
-				out.add("orgpools.ini: " + k.id + ": no registered material " + k.material);
 		}
 		return out;
 	}

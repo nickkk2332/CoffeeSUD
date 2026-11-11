@@ -11,6 +11,11 @@ import com.planet_ink.coffee_mud.Areas.interfaces.Area;
 import com.planet_ink.coffee_mud.Areas.interfaces.AutoGenArea;
 import com.planet_ink.coffee_mud.Behaviors.interfaces.Behavior;
 import com.planet_ink.coffee_mud.core.interfaces.Physical;
+import com.planet_ink.coffee_mud.Common.interfaces.ScriptingEngine;
+import com.planet_ink.coffee_mud.Items.interfaces.Item;
+import com.planet_ink.coffee_mud.Items.interfaces.RawMaterial;
+import com.planet_ink.coffee_mud.Locales.interfaces.Room;
+import com.planet_ink.coffee_mud.MOBS.interfaces.MOB;
 import com.planet_ink.coffee_mud.core.ModuleContent.Entry;
 
 /*
@@ -36,7 +41,13 @@ import com.planet_ink.coffee_mud.core.ModuleContent.Entry;
  * activity, an expedition's generated destination, return room, modifier
  * effects and activity, a track's skills, a loot policy's base, and the item
  * modifier library's pools, successors and recipes.  Each reference is reported
- * where it is written: its file and JSON path.  What the check cannot see into
+ * where it is written: its file and JSON path.  Phase 2's world files and
+ * records are followed too: cultures, origins' cultures, talents, challenge
+ * books, formation roles, shared pools and affiliation rules (their file and
+ * entry), and the service records and offer books on mobs and items in the
+ * world and the catalog (the room or catalog entry): a service's pool,
+ * organization and workstation, and whether something on the NPC answers its
+ * word.  What the check cannot see into
  * (a script on a mob or item, a generator with scripts) is reported as unknown,
  * not as safe or as broken.
  */
@@ -184,7 +195,200 @@ public final class CrossRefs
 				out.add(bad);
 			}
 		}
+		phase2Files(out);
+		phase2Hosts(out);
 		return out;
+	}
+
+	/** a reference already resolved where it was found (a host's room, its scripts) */
+	private static void found(final List<Ref> out, final String file, final String path, final String kind, final String target, final String status, final String note)
+	{
+		final Ref r = new Ref(file, path, kind, target);
+		r.status = status;
+		r.note = note;
+		out.add(r);
+	}
+
+	private static String first(final String entry)
+	{
+		final List<String> w = CMParms.parse(entry.trim());
+		return w.isEmpty() ? "" : w.get(0);
+	}
+
+	/** phase 2's world files: what each names in the others */
+	private static void phase2Files(final List<Ref> out)
+	{
+		// P11 cultures, and the origins that start a character in one
+		for(final Origins.Origin C : Cultures.all())
+		{
+			for(final String entry : CMParms.parseCommas(C.get("ABILITIES"), true))
+				add(out, "cultures.ini", "[" + C.id + "]/ABILITIES", "ability", first(entry));
+		}
+		for(final Origins.Origin O : Origins.all())
+			add(out, "origins.ini", "[" + O.id + "]/CULTURE", "culture", O.get("CULTURE"));
+		// P15 talents: the lore they wait for and the ability they teach
+		for(final Talents.Talent t : Talents.talents().values())
+		{
+			for(final String k : t.lore)
+				add(out, "talents.ini", t.id + "/LORE", "lore", k);
+			add(out, "talents.ini", t.id + "/ABILITY", "ability", t.ability);
+		}
+		// P13 challenge books: the achievements named
+		for(final Challenges.Book b : Challenges.books().values())
+		{
+			for(final String a : b.named)
+				add(out, "challenges.ini", b.id + "/ENTRIES", "achievement", a);
+		}
+		// P06 formation roles: the role a role guards
+		for(final Origins.Origin R : FormationRoles.all())
+		{
+			final String g = R.get("GUARDS");
+			if(!g.equalsIgnoreCase("LEADER"))
+				add(out, "formations.ini", "[" + R.id + "]/GUARDS", "role", g);
+		}
+		// P08 shared pools: the material a pool is given in
+		for(final OrgPools.Kind k : OrgPools.kinds().values())
+			add(out, "orgpools.ini", k.id + "/MATERIAL", "material", k.material);
+		// P03 affiliation rules: the organizations named, and what leaving takes
+		final Affiliations.Rules ar = Affiliations.rules();
+		for(final String org : ar.tags.keySet())
+			add(out, "affiliations.ini", "TAG|" + org, "organization", org);
+		for(final String org : ar.keep.keySet())
+			add(out, "affiliations.ini", "KEEP|" + org, "organization", org);
+		for(final Map.Entry<String, String> e : ar.leave.entrySet())
+		{
+			add(out, "affiliations.ini", "LEAVE|" + e.getKey(), "organization", e.getKey());
+			for(final String a : CMParms.parseCommas(CMParms.getParmStr(e.getValue(), "ABILITIES", ""), true))
+				add(out, "affiliations.ini", "LEAVE|" + e.getKey() + "/ABILITIES", "ability", a.trim());
+		}
+	}
+
+	/** phase 2's records on things: service records (P04) and offer books (I14), in the world and the catalog */
+	private static void phase2Hosts(final List<Ref> out)
+	{
+		for(final Enumeration<Room> r = CMLib.map().rooms(); r.hasMoreElements();)
+		{
+			final Room R = r.nextElement();
+			if(R == null)
+				continue;
+			for(final Enumeration<MOB> m = R.inhabitants(); m.hasMoreElements();)
+			{
+				final MOB M = m.nextElement();
+				if((M != null) && M.isMonster())
+					host(out, R.roomID() + " " + M.Name(), M, R);
+			}
+			for(final Enumeration<Item> i = R.items(); i.hasMoreElements();)
+			{
+				final Item I = i.nextElement();
+				if(I != null)
+					host(out, R.roomID() + " " + I.Name(), I, R);
+			}
+		}
+		if(CMLib.catalog() != null)
+		{
+			for(final String name : CMLib.catalog().getCatalogMobNames())
+				host(out, "catalog mob " + name, CMLib.catalog().getCatalogMob(name), null);
+			for(final String name : CMLib.catalog().getCatalogItemNames())
+				host(out, "catalog item " + name, CMLib.catalog().getCatalogItem(name), null);
+		}
+	}
+
+	private static void host(final List<Ref> out, final String where, final Physical P, final Room R)
+	{
+		if(P == null)
+			return;
+		final Ability svc = P.fetchEffect(Services.PROPERTY);
+		if((svc != null) && (P instanceof MOB))
+		{
+			final String why = Services.problem(svc.text());
+			if(!why.isEmpty())
+				found(out, where, "/" + Services.PROPERTY, "service-record", P.Name(), "error", "its service records cannot be read: " + why);
+			else
+			{
+				final List<Services.Service> all = Services.of((MOB)P);
+				for(int i = 0; i < all.size(); i++)
+				{
+					final Services.Service s = all.get(i);
+					final String path = "/" + Services.PROPERTY + "/services/" + i;
+					add(out, where, path + "/cost/pool", "org-pool", s.pool);
+					add(out, where, path + "/cost/org", "organization", s.org);
+					if(!s.station.isEmpty())
+					{
+						if(R == null)
+							found(out, where, path + "/station", "station", s.station, "unknown", "placed later: whether its room has a " + s.station + " is not known");
+						else
+						if(Workstations.has(R, s.station))
+							found(out, where, path + "/station", "station", s.station, "ok", "");
+						else
+							found(out, where, path + "/station", "station", s.station, "error", "its room has no workstation " + s.station + ", so " + s.title + " is never given");
+					}
+					final String answer = answered((MOB)P, s.words);
+					found(out, where, path + "/words", "service-answer", s.words.get(0),
+						answer.equals("yes") ? "ok" : answer.equals("no") ? "error" : "unknown",
+						answer.equals("yes") ? "" : answer.equals("no")
+							? "nothing on " + P.Name() + " answers '" + s.words.get(0) + "' (no SPEECH_PROG): asking would pay for nothing"
+							: answer);
+				}
+			}
+		}
+		final Ability book = P.fetchEffect(OfferBooks.PROPERTY);
+		if(book != null)
+		{
+			try
+			{
+				final OfferBooks.Book b = OfferBooks.read(book);
+				for(int i = 0; i < b.names.size(); i++)
+					add(out, where, "/" + OfferBooks.PROPERTY + "/items/" + i, "catalog-item", b.names.get(i));
+			}
+			catch(final IOException x)
+			{
+				found(out, where, "/" + OfferBooks.PROPERTY, "offer-book", P.Name(), "error", "its offer book cannot be read: " + x.getMessage());
+			}
+		}
+	}
+
+	/** whether something on an NPC answers one of a service's words: "yes", "no", or why it cannot be told */
+	private static String answered(final MOB M, final List<String> words)
+	{
+		final List<String> texts = new ArrayList<String>();
+		for(final Enumeration<ScriptingEngine> e = M.scripts(); e.hasMoreElements();)
+		{
+			final ScriptingEngine S = e.nextElement();
+			if(S != null)
+				texts.add(S.getScript() == null ? "" : S.getScript());
+		}
+		boolean opaque = false;
+		for(final Enumeration<Behavior> e = M.behaviors(); e.hasMoreElements();)
+		{
+			final Behavior B = e.nextElement();
+			if(B == null)
+				continue;
+			if(B.ID().toUpperCase(Locale.ROOT).contains("SCRIPT"))
+				texts.add(B.getParms());
+			else
+			if(B.ID().equalsIgnoreCase("MudChat") || B.ID().equalsIgnoreCase("GenBehavior"))
+				opaque = true;
+		}
+		for(final String t : texts)
+		{
+			final String up = t.toUpperCase(Locale.ROOT);
+			if(up.contains("LOAD=") || up.contains("<SCRIPT>") || up.contains("JSFILE"))
+				opaque = true;
+			for(final String line : up.split("[\\n;~]"))
+			{
+				final String l = line.trim();
+				if(!l.startsWith("SPEECH_PROG"))
+					continue;
+				if(l.contains(" ALL"))
+					return "yes";
+				for(final String w : words)
+				{
+					if(l.contains(w.toUpperCase(Locale.ROOT)))
+						return "yes";
+				}
+			}
+		}
+		return opaque ? "its scripts are loaded from files or run JavaScript; whether they answer is not checked" : "no";
 	}
 
 	/** whether a mob or item carries scripts the check cannot follow */
@@ -333,6 +537,48 @@ public final class CrossRefs
 				{
 					if(!policies.has(r.target))
 						fail(r, "no loot policy " + r.target + " in loot/");
+				}
+				else
+				if(r.kind.equals("culture"))
+				{
+					if(Cultures.find(r.target) == null)
+						fail(r, "no culture " + r.target + " in cultures.ini");
+				}
+				else
+				if(r.kind.equals("lore"))
+				{
+					if(!LoreBook.entries().containsKey(r.target.toUpperCase(Locale.ROOT)))
+						fail(r, "no lore " + r.target + " in lore/");
+				}
+				else
+				if(r.kind.equals("achievement"))
+				{
+					if(CMLib.achievements().getAchievement(r.target) == null)
+						fail(r, "no achievement " + r.target);
+				}
+				else
+				if(r.kind.equals("role"))
+				{
+					if(FormationRoles.find(r.target) == null)
+						fail(r, "no role " + r.target + " in formations.ini");
+				}
+				else
+				if(r.kind.equals("material"))
+				{
+					if(RawMaterial.CODES.FIND_CaseSensitive(r.target.toUpperCase(Locale.ROOT)) < 0)
+						fail(r, "no registered material " + r.target);
+				}
+				else
+				if(r.kind.equals("organization"))
+				{
+					if(CMLib.clans().getClan(r.target) == null)
+						fail(r, "no organization " + r.target);
+				}
+				else
+				if(r.kind.equals("org-pool"))
+				{
+					if(!OrgPools.kinds().containsKey(r.target.toUpperCase(Locale.ROOT)))
+						fail(r, "no shared pool " + r.target + " in orgpools.ini");
 				}
 			}
 			catch(final IOException x)

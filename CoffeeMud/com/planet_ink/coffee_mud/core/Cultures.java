@@ -306,25 +306,4 @@ public final class Cultures
 		return (s.length() == 0) ? CMLib.lang().L("This world has no cultures.") : s.toString();
 	}
 
-	/** what WORLD CHECK reports: unknown abilities, and an origin's CULTURE= that names none */
-	public static List<String> problems()
-	{
-		final List<String> out = new ArrayList<String>();
-		for(final Origin C : all())
-		{
-			for(final String entry : words(C.get("ABILITIES")))
-			{
-				final String id = CMParms.parse(entry).get(0);
-				if(CMClass.getAbility(id) == null)
-					out.add("cultures.ini [" + C.id + "]: no ability " + id);
-			}
-		}
-		for(final Origin O : Origins.all())
-		{
-			final String c = O.get("CULTURE");
-			if((c.length() > 0) && (find(c) == null))
-				out.add("origins.ini [" + O.id + "] CULTURE: no culture " + c + " in cultures.ini");
-		}
-		return out;
-	}
 }

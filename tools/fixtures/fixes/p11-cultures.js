@@ -20,8 +20,8 @@ try {
 		+ "[BROKEN]\nABILITIES=NoSuchAbilityAtAll\n");
 	write("origins.ini", "[DELTA]\nNAME=Delta-born\nCULTURE=RIVERFOLK\n[LOST]\nNAME=Lost\nCULTURE=NOSUCH\n");
 	WorldFiles.configure(root);
-	var probs = s(CU.problems());
-	check("problems", probs.indexOf("cultures.ini [BROKEN]: no ability NoSuchAbilityAtAll") >= 0 && probs.indexOf("origins.ini [LOST] CULTURE: no culture NOSUCH") >= 0, probs);
+	var probs = s(CM.core.CrossRefs.errors());
+	check("problems", probs.indexOf("cultures.ini: [BROKEN]/ABILITIES: no ability NoSuchAbilityAtAll") >= 0 && probs.indexOf("origins.ini: [LOST]/CULTURE: no culture NOSUCH in cultures.ini") >= 0, probs);
 	var P = CMClass.getMOB("StdMOB"); P.setName("Fixp11Pip"); P.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
 	P.baseCharStats().setMyRace(CMClass.getRace("Human")); P.recoverCharStats(); P.bringToLife(M.location(), true); made.push(P);
 	var VS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });

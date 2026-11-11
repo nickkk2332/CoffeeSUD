@@ -329,17 +329,17 @@ public final class WorldCheck
 		// A05: perks.ini's trees, links and keys
 		for(final String p : Perks.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", "perks.ini: " + p));
-		// P15: talents.ini's lore and abilities
+		// P15: talents.ini's entries (the lore and abilities they name are followed by REFS)
 		for(final String p : Talents.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
-		// P13: challenges.ini's books and entries
+		// P13: challenges.ini's books (the achievements they name are followed by REFS)
 		for(final String p : Challenges.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
 		// P06: formations.ini's roles
 		for(final String p : FormationRoles.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
-		// P11: cultures.ini's abilities, and origins' cultures
-		for(final String p : Cultures.problems())
+		// P03: affiliations.ini's lines (the organizations and abilities they name are followed by REFS)
+		for(final String p : Affiliations.rules().problems)
 			out.add(new Finding(Severity.ERROR, "DATA", p));
 		// P08: orgpools.ini's kinds of pool
 		for(final String p : OrgPools.problems())

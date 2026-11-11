@@ -18,7 +18,9 @@ try {
 		+ 'SEER=TITLE="Second sight" LORE="HERBS_2" CHANCE=50\n'
 		+ 'BROKEN=TITLE="Nothing" LORE="NOSUCH" ABILITY=NoSuchSkillAtAll\n');
 	WorldFiles.configure(root);
-	check("problems", s(T.problems()).indexOf("BROKEN: no ability NoSuchSkillAtAll") >= 0, s(T.problems()));
+	var refs = s(CM.core.CrossRefs.errors());
+	check("problems", refs.indexOf("talents.ini: BROKEN/ABILITY: no ability NoSuchSkillAtAll") >= 0 && refs.indexOf("talents.ini: BROKEN/LORE: no lore NOSUCH in lore/") >= 0
+		&& refs.indexOf("talents.ini: HERBALIST") < 0, refs);
 	ann = newMob("GenMob", R); ann.setName("Fixp15 Ann"); ann.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
 
 	// the first lore: the talent it completes, of chance 0, is decided dormant; the one that needs more waits

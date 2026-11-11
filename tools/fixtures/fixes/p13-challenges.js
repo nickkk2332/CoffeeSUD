@@ -17,7 +17,8 @@ try {
 	ach('ACH_FIXP13_3=EVENT="KILLS" DISPLAY="Trials: the warden unarmored" TITLE="" REWARDS="" NUM=1 ZAPPERMASK="-NAMES \\"+the fixp13 warden\\"" VISIBLEMASK="-TATTOOS +ACH_FIXP13_1"');
 	Files.write(new java.io.File(root, "challenges.ini").toPath(), new java.lang.String('FIXP13=TITLE="Trials of the fixp13 forge" PREFIX="ACH_FIXP13_"\nBADBOOK=TITLE="Nothing" ENTRIES="ACH_NOSUCH"\n').getBytes("UTF-8"));
 	WorldFiles.configure(root);
-	check("problems", s(C.problems()).indexOf("BADBOOK: no achievement ACH_NOSUCH") >= 0, s(C.problems()));
+	var refs = s(CM.core.CrossRefs.errors());
+	check("problems", refs.indexOf("challenges.ini: BADBOOK/ENTRIES: no achievement ACH_NOSUCH") >= 0 && refs.indexOf("challenges.ini: FIXP13") < 0, refs);
 	var P = CMClass.getMOB("StdMOB"); P.setName("Fixp13 Pip"); P.setPlayerStats(CMClass.getCommon("DefaultPlayerStats")); P.baseCharStats().setMyRace(CMClass.getRace("Human"));
 	P.recoverCharStats(); P.bringToLife(M.location(), true); made.push(P);
 
