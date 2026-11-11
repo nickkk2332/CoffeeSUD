@@ -398,4 +398,40 @@ public final class OrgPools
 			out.add(k + " " + o.get(k));
 		return String.join(", ", out);
 	}
+
+	/** renames.ini: an organization's pools, and its ledger's totals, under the names the file gives them now; @return what was renamed */
+	public static List<String> rename(final Clan C, final Map<String, String> renames) throws IOException
+	{
+		final List<String> did = new ArrayList<String>();
+		final JSONObject P = json(C, "POOLS");
+		for(final String k : new ArrayList<String>(P.keySet()))
+		{
+			final String now = renames.get(k.toUpperCase(Locale.ROOT));
+			if(now == null)
+				continue;
+			final long had = (P.get(k) instanceof Number) ? ((Number)P.get(k)).longValue() : 0;
+			final long there = (P.get(now) instanceof Number) ? ((Number)P.get(now)).longValue() : 0;
+			P.remove(k);
+			P.put(now, Long.valueOf(had + there));
+			did.add(C.getName() + "'s pool " + k + " is " + now + " now (" + had + " unit(s))");
+		}
+		if(did.isEmpty())
+			return did;
+		C.setStat("POOLS", ModuleDefinitions.json(P));
+		final JSONObject L = json(C, "POOLLEDGER");
+		for(final String side : new String[] { "givers", "users" })
+		{
+			if(!(L.get(side) instanceof JSONObject))
+				continue;
+			final JSONObject totals = (JSONObject)L.get(side);
+			for(final String k : new ArrayList<String>(totals.keySet()))
+			{
+				final String now = renames.get(k.toUpperCase(Locale.ROOT));
+				if((now != null) && !totals.containsKey(now))
+					totals.put(now, totals.remove(k));
+			}
+		}
+		C.setStat("POOLLEDGER", ModuleDefinitions.json(L));
+		return did;
+	}
 }

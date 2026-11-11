@@ -445,4 +445,16 @@ public final class FormationRoles
 		}
 		return out;
 	}
+
+	/** renames.ini: a member's role (and the tattoo masks test) under the name the file gives it now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
+	{
+		final List<String> did = new ArrayList<String>();
+		for(final Map.Entry<String, String> e : renames.entrySet())
+		{
+			if(RulesFiles.renameTattoo(M, PREFIX + e.getKey(), PREFIX + e.getValue()))
+				did.add("role " + e.getKey() + " is " + e.getValue() + " now");
+		}
+		return did;
+	}
 }

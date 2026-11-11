@@ -93,8 +93,10 @@ follows the names in each phase 2 rules file and service record, and `LEDGER`
 shows their events and refusals ([Ch. 41](../../creator/41-inspection-and-limits.md#ledgers)).
 A save keeps pools, held service payments, cultures, formation roles, talents,
 challenge records and affiliations, and `RESTORE` names any rules file that
-changed since the save ([Ch. 31](../../creator/31-saves-and-party.md#rules-files));
-the played test is `tools/fixes.sh saves5`. `tools/simulate.py` takes elite
+changed since the save; `world/renames.ini` carries a renamed entry over to
+whoever holds it, and `WORLD MODULES RULES` lists the files
+([Ch. 31](../../creator/31-saves-and-party.md#rules-files)). The played test is
+`tools/fixes.sh saves5`. `tools/simulate.py` takes elite
 traits, a boss's own actions, allies with roles and formations
 ([Ch. 41](../../creator/41-inspection-and-limits.md#a-boss-that-fights-back)).
 

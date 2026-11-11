@@ -761,8 +761,12 @@ group_saves5()
 	jsresults p2phase2-play.txt
 	# a rules file edited after the save: the restore names it, and what that means
 	printf '\n[NEWWAYS]\nNAME=New ways\n' >> "$W/p2world/cultures.ini"
+	# a world update renames a role a follower already holds: renames.ini carries it over at the restore
+	sed -i 's/^\[GUARD\]/[WARDEN]/' "$W/p2world/formations.ini"
+	printf '[formations.ini]\nGUARD=WARDEN\n' > "$W/p2world/renames.ini"
 	play p2phase2-check.txt p2db p2world 'jrun /resources/_fixes/p2-phase2-check.js\nquit\nn\n' RESTORE=p2phase2 TIMEMODE=TURNS
 	expect p2phase2-check.txt "Changed rules file: cultures.ini"
+	expect p2phase2-check.txt "role GUARD is WARDEN now"
 	jsresults p2phase2-check.txt
 
 	# S19 and S18: areas made in play survive a save: an instance (the

@@ -34,6 +34,14 @@ still separate proposals, not implementations supplied by this framework.
    adding or editing these files never reports a save as made with another
    version of the world or rebuilds the content cache.
 
+The character and organization features (`cultures.ini`, `talents.ini`,
+`formations.ini`, `orgpools.ini`, `challenges.ini`, `affiliations.ini`) are
+rules files, not modules: they have no manifest, version or migrations, and are
+on whenever their file is there. A save keeps each file's sum and the restore
+names those that changed; `world/renames.ini` carries a renamed entry over to
+whoever holds it; `WORLD MODULES RULES` lists them. See
+[Rules files](31-saves-and-party.md#rules-files).
+
 For example, after installing the example's two manifests:
 
 ```ini

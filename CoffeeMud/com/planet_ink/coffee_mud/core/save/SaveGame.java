@@ -513,6 +513,13 @@ public final class SaveGame
 			mob.setActions(mob.phyStats().speed());
 		WorldState.finishRestore(mob);
 		com.planet_ink.coffee_mud.core.Perks.sync(mob); // A05: perk effects as perks.ini has them now
+		// renames.ini: what the character, its followers and its organizations hold by an old name, under the new one
+		final List<String> renamed = com.planet_ink.coffee_mud.core.RulesFiles.migrateAll(mob);
+		if(!renamed.isEmpty() && "RESTORE".equals(bootEvent))
+		{
+			for(final String r : renamed)
+				noteWorldChange(r);
+		}
 		com.planet_ink.coffee_mud.core.Talents.recheck(mob); // P15: a talent the world added since, whose needs are met, is decided
 		if(Boolean.getBoolean("sud.isolated.playtest") && mob.fetchEffect("Prop_Playtest")==null)
 		{

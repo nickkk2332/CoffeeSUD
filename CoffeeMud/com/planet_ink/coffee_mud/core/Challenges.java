@@ -268,4 +268,25 @@ public final class Challenges
 		}
 		return said;
 	}
+
+	/** renames.ini: a character's personal records filed under the book's name now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
+	{
+		final List<String> did = new ArrayList<String>();
+		final MiniJSON.JSONObject all = StoryRecords.read(M);
+		if(!(all.get("records") instanceof MiniJSON.JSONObject))
+			return did;
+		final MiniJSON.JSONObject records = (MiniJSON.JSONObject)all.get("records");
+		for(final String k : new ArrayList<String>(records.keySet()))
+		{
+			final String now = renames.get(k.toUpperCase(Locale.ROOT));
+			if((now == null) || records.containsKey(now))
+				continue;
+			records.put(now, records.remove(k));
+			did.add("records of " + k + " are filed under " + now + " now");
+		}
+		if(!did.isEmpty())
+			StoryRecords.write(M, all);
+		return did;
+	}
 }

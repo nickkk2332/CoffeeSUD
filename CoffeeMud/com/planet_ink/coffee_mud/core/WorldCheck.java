@@ -344,6 +344,9 @@ public final class WorldCheck
 		// P08: orgpools.ini's kinds of pool
 		for(final String p : OrgPools.problems())
 			out.add(new Finding(Severity.ERROR, "DATA", p));
+		// renames.ini: each rename's file and new name
+		for(final String p : RulesFiles.problems())
+			out.add(new Finding(Severity.ERROR, "DATA", p));
 	}
 
 	/**

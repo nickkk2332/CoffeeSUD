@@ -418,4 +418,25 @@ public final class Cultures
 		return (s.length() == 0) ? CMLib.lang().L("This world has no cultures.") : s.toString();
 	}
 
+
+	/** renames.ini: a character's culture under the name the file gives it now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
+	{
+		final List<String> did = new ArrayList<String>();
+		final String held = heldId(M).toUpperCase(Locale.ROOT);
+		final String now = renames.get(held);
+		if(!held.isEmpty() && (now != null))
+		{
+			final MiniJSON.JSONObject data = StoryRecords.read(M);
+			StoryRecords.object(data, RECORD).put("current", now);
+			StoryRecords.write(M, data);
+			did.add("culture " + held + " is " + now + " now");
+		}
+		for(final Map.Entry<String, String> e : renames.entrySet())
+		{
+			if(RulesFiles.renameTattoo(M, "CULTUREPICK_" + e.getKey(), "CULTUREPICK_" + e.getValue()))
+				did.add("the culture picked at creation, " + e.getKey() + ", is " + e.getValue() + " now");
+		}
+		return did;
+	}
 }

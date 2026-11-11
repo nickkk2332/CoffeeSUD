@@ -198,4 +198,18 @@ public final class Talents
 		}
 		return s.toString();
 	}
+
+	/** renames.ini: a character's decided talents under the names the file gives them now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
+	{
+		final List<String> did = new ArrayList<String>();
+		for(final Map.Entry<String, String> e : renames.entrySet())
+		{
+			final boolean a = RulesFiles.renameTattoo(M, "TALENT_" + e.getKey(), "TALENT_" + e.getValue());
+			final boolean b = RulesFiles.renameTattoo(M, "TALENT_" + e.getKey() + "_DORMANT", "TALENT_" + e.getValue() + "_DORMANT");
+			if(a || b)
+				did.add("talent " + e.getKey() + " is " + e.getValue() + " now");
+		}
+		return did;
+	}
 }

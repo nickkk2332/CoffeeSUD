@@ -16,7 +16,9 @@ check("culture-kept", C != null && s(C.id) == "RIVERFOLK" && hist != null && his
 	C == null ? "no culture" : s(hist));
 var guard = null; for (var f = M.followers(); f.hasMoreElements();) { var F = f.nextElement().first; if (s(F.Name()) == "a fixp2 role guard") guard = F; }
 var R = guard == null ? null : CM.core.FormationRoles.of(guard);
-check("role-kept", R != null && s(R.id) == "GUARD" && M.fetchFollowerOrder(guard) == 2 && guard.findTattoo("ROLEBACK") != null, guard == null ? "no guard" : "role " + R + " row " + M.fetchFollowerOrder(guard));
+// the world renamed the role GUARD to WARDEN after the save (renames.ini): the follower holds it by its new name
+check("role-kept", R != null && s(R.id) == "WARDEN" && guard.findTattoo("ROLE_GUARD") == null && M.fetchFollowerOrder(guard) == 2 && guard.findTattoo("ROLEBACK") != null,
+	guard == null ? "no guard" : "role " + R + " row " + M.fetchFollowerOrder(guard));
 if (guard != null) { CM.core.FormationRoles.fightEnded(guard); check("role-returns", M.fetchFollowerOrder(guard) == 0, "row " + M.fetchFollowerOrder(guard)); }
 check("talents-kept", s(CM.core.Talents.decided(M, "TIDES")) == "awakened" && s(CM.core.Talents.decided(M, "DREAMS")) == "dormant" && M.fetchAbility("Skill_Swim") != null, s(CM.core.Talents.list(M)));
 var book = s(CM.core.Challenges.show(M, "FIXP2"));

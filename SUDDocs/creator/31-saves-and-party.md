@@ -1168,6 +1168,49 @@ This save was made with another version of the world:
   Changed rules file: cultures.ini (cultures already taken up keep what they gave; ...).
 ```
 
+#### Renaming an entry (renames.ini)
+
+Characters and organizations hold these entries by name, so renaming one in its
+file would leave whoever holds it with a name the world no longer has. To rename
+one, change it in its file and say so in `world/renames.ini`: a `[file]`
+section per rules file, and in it `OLD=NEW` lines.
+
+```ini
+# world/renames.ini
+[cultures.ini]
+RIVERFOLK=RIVERKIN
+[formations.ini]
+GUARD=WARDEN
+[talents.ini]
+TIDES=TIDESENSE
+[challenges.ini]
+OLDTRIALS=TRIALS
+[orgpools.ini]
+SUPPLIES=STORES
+```
+
+When a character comes into the world, what it, its followers and its
+organizations hold by an old name is put under the new one: its culture (and a
+culture picked at creation), a member's role tattoo (`ROLE_GUARD` becomes
+`ROLE_WARDEN`, so masks should test the new name), decided talents, personal
+records filed under a book, and a pool's units (added to any already under the
+new name) with its ledger totals. Each is noted in the `LEDGER` of whoever held
+it, and after a `RESTORE` the report lists them ("a fixp2 role guard: role GUARD
+is WARDEN now (renames.ini)"). Renames chain (`A=B` then `B=C` takes `A` to
+`C`). Keep the lines for as long as saves made before the rename may be
+restored; they do nothing to a character that holds nothing by the old name.
+`affiliations.ini` names organizations rather than entries of its own, so it has
+no section here.
+
+`WORLD CHECK` names a `[file]` that is not one of these, a line that is not
+`OLD=NEW`, a name renamed to itself, renames that go round in a circle, a new
+name the file does not have, and an old name the file still has.
+`WORLD MODULES RULES` lists the rules files with their entries and sums, what a
+change to each means, and the renames in force. Test:
+[q06-renames.js](../../tools/fixtures/fixes/q06-renames.js); the played save
+test (`tools/fixes.sh saves5`) renames a follower's role between the save and
+the restore.
+
 ### A checklist for shipping a patch to a world with existing saves
 
 1. Keep a save made before the change (`SAVES COPY hero hero-before-patch`); a
