@@ -35,7 +35,7 @@ public class CombatResult extends StdCommand
 		{
 			CombatProfiles.playerAccess();
 			if(commands.size() == 2 && commands.get(1).equalsIgnoreCase("STATS"))
-				mob.tell(CombatProfiles.describeStats(mob));
+				mob.tell(CombatProfiles.describeStats(mob, mob)); // A23: your gear as you know it
 			else if(commands.size() == 1 || commands.size() == 2 && commands.get(1).matches("[1-8]"))
 				mob.tell(CombatProfiles.trace(mob, commands.size() == 1 ? 1 : Integer.parseInt(commands.get(1))));
 			else

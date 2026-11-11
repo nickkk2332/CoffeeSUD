@@ -333,8 +333,8 @@ public final class ItemChoices
 		return d.policy.isEmpty() ? ItemModifiers.definitions().find(d.base, 0, "base") : ItemLoot.base(d.policy);
 	}
 
-	/** why an offering will not take an item, or "" */
-	private static String refuses(final Def d, final Item item) throws IOException
+	/** why an offering will not take an item, or "": the item named as the one offering knows it (A23) */
+	private static String refuses(final Def d, final MOB mob, final Item item) throws IOException
 	{
 		if(!d.tags.isEmpty())
 		{
@@ -344,10 +344,10 @@ public final class ItemChoices
 			for(final Object t : ModuleDefinitions.array(ItemModifiers.data(item).get("tags"), "tags"))
 				have.add(String.valueOf(t));
 			if(!have.containsAll(d.tags))
-				return "it takes items tagged " + d.tags + "; " + item.Name() + " is tagged " + have;
+				return "it takes items tagged " + d.tags + "; " + item.name(mob) + " is tagged " + have;
 		}
 		if(!d.mask.isEmpty() && !CMLib.masking().maskCheck(d.mask, item, true))
-			return "it does not take " + item.Name() + " (" + CMLib.masking().maskDesc(d.mask) + ")";
+			return "it does not take " + item.name(mob) + " (" + CMLib.masking().maskDesc(d.mask) + ")";
 		return "";
 	}
 
@@ -360,7 +360,7 @@ public final class ItemChoices
 		where(mob, d);
 		ItemCrafting.custody(mob, item);
 		ItemCrafting.payAll(mob, item, cost(d));
-		final StringBuilder s = new StringBuilder(e.title).append(" (").append(e.key()).append(") on ").append(item.Name()).append("; cost ").append(costWords(d))
+		final StringBuilder s = new StringBuilder(e.title).append(" (").append(e.key()).append(") on ").append(item.name(mob)).append("; cost ").append(costWords(d))
 			.append(" at ").append(d.station).append('.');
 		if(d.kind.equals("reveal"))
 		{
@@ -368,7 +368,7 @@ public final class ItemChoices
 			final int at = veilIndex(rec, input);
 			final JSONObject veil = ItemModifierRules.veils(rec).get(at);
 			if(veil.containsKey("options"))
-				throw new IOException("veiled modifier " + (at + 1) + " is revealed already; CHOICES PICK \"" + item.Name() + "\" [number] settles it");
+				throw new IOException("veiled modifier " + (at + 1) + " is revealed already; CHOICES PICK \"" + item.name(mob) + "\" [number] settles it");
 			final List<ItemModifierRules.Odds> odds = revealOdds(d, rec, veil, item.basePhyStats().level());
 			if(ItemModifierRules.total(odds) <= 0)
 				throw new IOException("nothing could be revealed for veiled modifier " + (at + 1) + ":" + ItemModifierRules.describe(odds));
@@ -380,13 +380,13 @@ public final class ItemChoices
 		}
 		else
 		{
-			final String why = refuses(d, item);
+			final String why = refuses(d, mob, item);
 			if(why.length() > 0)
 				throw new IOException(why);
 			if(!field(state(mob), "offering").isEmpty())
 				throw new IOException("an offering is open already; CHOICES PICK OFFERING [number] or CHOICES ABANDON first");
 			final Item p = proto(d);
-			s.append("\nIt takes ").append(item.Name()).append(" for good, and offers ").append(d.options).append(" of ").append(p.Name())
+			s.append("\nIt takes ").append(item.name(mob)).append(" for good, and offers ").append(d.options).append(" of ").append(p.name(mob))
 				.append(", drawn once and kept until you choose. Abandoning gives back ").append(d.refund.equals("cost") ? "the cost" : "nothing").append('.')
 				.append("\nThe first modifier of each:")
 				.append(ItemModifierRules.describe(ItemModifiers.firstPick(d.policy.isEmpty() ? d.base : "POLICY=" + d.policy, p.basePhyStats().level(), ItemModifierRules.Bias.NONE)));
@@ -459,7 +459,7 @@ public final class ItemChoices
 		final List<JSONObject> veils = ItemModifierRules.veils(rec);
 		final JSONObject veil = veils.get(at);
 		if(veil.containsKey("options"))
-			throw new IOException("veiled modifier " + (at + 1) + " is revealed already: its options are kept; CHOICES PICK \"" + item.Name() + "\" [number] settles it");
+			throw new IOException("veiled modifier " + (at + 1) + " is revealed already: its options are kept; CHOICES PICK \"" + item.name(mob) + "\" [number] settles it");
 		final List<ItemModifierRules.Odds> odds = revealOdds(d, rec, veil, item.basePhyStats().level());
 		if(ItemModifierRules.total(odds) <= 0)
 			throw new IOException("nothing could be revealed for veiled modifier " + (at + 1) + ":" + ItemModifierRules.describe(odds));
@@ -486,8 +486,8 @@ public final class ItemChoices
 		dr.settle();
 		ModuleStats.count(FAMILY, e.id, "reveals");
 		Provenance.event(mob, MODULE, "reveal", (e.key() + " on " + item.Name()).substring(0, Math.min(160, (e.key() + " on " + item.Name()).length())));
-		return "You reveal veiled modifier " + (at + 1) + " of " + item.Name() + ". It could be:" + menu(options)
-			+ "\nThe options are kept on the item. CHOICES PICK \"" + item.Name() + "\" [number] settles one; the others are gone then.";
+		return "You reveal veiled modifier " + (at + 1) + " of " + item.name(mob) + ". It could be:" + menu(options)
+			+ "\nThe options are kept on the item. CHOICES PICK \"" + item.name(mob) + "\" [number] settles one; the others are gone then.";
 	}
 
 	private static String offer(final MOB mob, final Entry<Def> e, final Item item) throws IOException
@@ -496,7 +496,7 @@ public final class ItemChoices
 		final JSONObject st = state(mob);
 		if(!field(st, "offering").isEmpty())
 			throw new IOException("an offering is open already; CHOICES PICK OFFERING [number] or CHOICES ABANDON first");
-		final String why = refuses(d, item);
+		final String why = refuses(d, mob, item);
 		if(why.length() > 0)
 			throw new IOException(why);
 		final Item p = proto(d);
@@ -537,6 +537,8 @@ public final class ItemChoices
 		final JSONObject open = new JSONObject();
 		open.put("def", e.pin());
 		open.put("offered", item.Name());
+		if(!item.name(mob).equals(item.Name()))
+			open.put("offered_as", item.name(mob)); // A23: what the one offering took it for, which CHOICES names it as
 		open.put("catalog", d.catalog);
 		open.put("base", ItemModifierRules.pin(base));
 		open.put("options", options.toArray());
@@ -566,7 +568,7 @@ public final class ItemChoices
 		dr.settle();
 		ModuleStats.count(FAMILY, e.id, "offerings");
 		Provenance.event(mob, MODULE, "offering", (e.key() + " took " + item.Name()).substring(0, Math.min(160, (e.key() + " took " + item.Name()).length())));
-		return "You offer " + item.Name() + "; it is gone. " + e.title + " offers:" + offerMenu(open)
+		return "You offer " + item.name(mob) + "; it is gone. " + e.title + " offers:" + offerMenu(open)
 			+ "\nThe options are kept until you choose. CHOICES PICK OFFERING [number] takes one; CHOICES ABANDON gives back "
 			+ (d.refund.equals("cost") ? "the cost" : "nothing") + ".";
 	}
@@ -606,7 +608,7 @@ public final class ItemChoices
 				at = i;
 		}
 		if(at < 0)
-			throw new IOException(veils.isEmpty() ? item.Name() + " has no veiled modifier" : "no veiled modifier of " + item.Name() + " is revealed yet; CHOICES OPEN a reveal first");
+			throw new IOException(veils.isEmpty() ? item.name(mob) + " has no veiled modifier" : "no veiled modifier of " + item.name(mob) + " is revealed yet; CHOICES OPEN a reveal first");
 		final JSONObject veil = veils.get(at);
 		final Object[] options = ModuleDefinitions.array(veil.get("options"), "options");
 		if((n < 1) || (n > options.length))
@@ -650,7 +652,7 @@ public final class ItemChoices
 			}
 		}
 		ModuleStats.count(FAMILY, (by == null) ? "reveal" : by.id, "picks");
-		return "You settle " + item.Name() + "'s veiled " + chosen.get("position") + ": " + chosen.get("name") + ". The other options are gone."
+		return "You settle " + item.name(mob) + "'s veiled " + chosen.get("position") + ": " + chosen.get("name") + ". The other options are gone."
 			+ (noted ? " " + affix.name + " goes in your codex" + (reward.isEmpty() ? "." : ": " + reward) : first ? " Your codex is full." : " You knew it already.");
 	}
 
@@ -693,7 +695,7 @@ public final class ItemChoices
 		}
 		mob.addItem(made);
 		ModuleStats.count(FAMILY, String.valueOf(((JSONObject)open.get("def")).get("id")), "picks");
-		return "You take " + made.Name() + ". The other options are gone.";
+		return "You take " + made.name(mob) + ". The other options are gone.";
 	}
 
 	/** CHOICES ABANDON: closes the open offering by its refund rule */
@@ -724,17 +726,23 @@ public final class ItemChoices
 		for(final Item I : back)
 			mob.addItem(I);
 		ModuleStats.count(FAMILY, String.valueOf(((JSONObject)open.get("def")).get("id")), "abandoned");
-		return "You abandon the offering of " + open.get("offered") + ". " + (back.isEmpty() ? "Nothing comes back." : "The cost comes back.");
+		return "You abandon the offering of " + offered(open) + ". " + (back.isEmpty() ? "Nothing comes back." : "The cost comes back.");
 	}
 
-	/** CHOICES: the open offering, the revealed veils on what you carry, and your codex */
+	/** what an open offering took, as the one offering knew it (A23) */
+	private static String offered(final JSONObject open)
+	{
+		return String.valueOf(open.containsKey("offered_as") ? open.get("offered_as") : open.get("offered"));
+	}
+
+	/** CHOICES: the open offering, the revealed veils on what you carry, and your codex (each named as you know it) */
 	public static String list(final MOB mob) throws IOException
 	{
 		require();
 		final StringBuilder s = new StringBuilder();
 		final JSONObject st = state(mob), open = field(st, "offering");
 		if(!open.isEmpty())
-			s.append("Open offering of ").append(open.get("offered")).append(" (").append(((JSONObject)open.get("def")).get("id")).append("):").append(offerMenu(open))
+			s.append("Open offering of ").append(offered(open)).append(" (").append(((JSONObject)open.get("def")).get("id")).append("):").append(offerMenu(open))
 				.append("\nCHOICES PICK OFFERING [number] takes one; CHOICES ABANDON gives back ").append("cost".equals(open.get("refund")) ? "the cost" : "nothing").append('.');
 		for(final Enumeration<Item> e = mob.items(); e.hasMoreElements();)
 		{
@@ -745,7 +753,7 @@ public final class ItemChoices
 			for(int i = 0; i < veils.size(); i++)
 			{
 				final JSONObject v = veils.get(i);
-				s.append(s.length() > 0 ? "\n" : "").append(I.Name()).append(", veiled ").append(i + 1).append(" (a ").append(v.get("position")).append("): ");
+				s.append(s.length() > 0 ? "\n" : "").append(I.name(mob)).append(", veiled ").append(i + 1).append(" (a ").append(v.get("position")).append("): ");
 				if(!v.containsKey("options"))
 					s.append("not yet revealed");
 				else
@@ -753,7 +761,7 @@ public final class ItemChoices
 					final List<JSONObject> options = new ArrayList<JSONObject>();
 					for(final Object o : (Object[])v.get("options"))
 						options.add((JSONObject)o);
-					s.append("revealed; CHOICES PICK \"").append(I.Name()).append("\" [number]:").append(menu(options));
+					s.append("revealed; CHOICES PICK \"").append(I.name(mob)).append("\" [number]:").append(menu(options));
 				}
 			}
 		}

@@ -388,7 +388,9 @@ public class StdShopKeeper extends StdMOB implements ShopKeeper
 				{
 					final double pawningPrice = CMLib.coffeeShops().pawningPrice(this, mob, msg.tool(), this).absoluteGoldPrice;
 					final String currencyShort = CMLib.beanCounter().nameCurrencyShort(this, pawningPrice);
-					CMLib.commands().postSay(this, mob, L("I'll give you @x1 for @x2.", currencyShort, msg.tool().name()), true, false);
+					// A23: the customer hears it named as they know it
+					final String seen = (msg.tool() instanceof Item) ? ((Item) msg.tool()).name(mob) : msg.tool().name();
+					CMLib.commands().postSay(this, mob, L("I'll give you @x1 for @x2.", currencyShort, seen), true, false);
 				}
 				break;
 			}
@@ -419,7 +421,8 @@ public class StdShopKeeper extends StdMOB implements ShopKeeper
 					if ((msg.tool() != null)
 					&& (getShop().doIHaveThisInStock("$" + msg.tool().Name() + "$", mob)))
 					{
-						final String prefix = L("Interested in @x1? Here is some information for you: ",msg.tool().Name());
+						final String seen = (msg.tool() instanceof Item) ? ((Item) msg.tool()).name(msg.source()) : msg.tool().Name(); // A23
+						final String prefix = L("Interested in @x1? Here is some information for you: ",seen);
 						final String viewDesc = prefix + CMLib.coffeeShops().getViewDescription(msg.source(), msg.tool(), viewFlags());
 						CMLib.commands().postSay(this, msg.source(), viewDesc, true, false);
 					}

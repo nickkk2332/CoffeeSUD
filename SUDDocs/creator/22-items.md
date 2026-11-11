@@ -1621,6 +1621,26 @@ description everywhere the engine names it for them, refer to it by that name,
 and appraise it or sell it for what it seems. Identifying, appraising,
 examining or using it (as its `REVEAL` says) teaches the kind, saved with them.
 
+Where a character who does not know the kind sees the unknown name, look or
+description:
+
+| Where | What they see |
+| --- | --- |
+| Messages | `<T-NAME>` and the other name codes: combat, giving, buying, wearing |
+| `INVENTORY`, `EQUIPMENT` | The unknown name; so do the prompt's worn-item codes (`%-NECK`, `%-WIELD` and the like), and a character window's side panel, which draws them |
+| `LOOK` at the room | The unknown look (`DISPLAY`, else "[NAME] lies here."). An item with no look of its own, one the room's description names, still has none |
+| `LOOK` at it, `LOOK IN` it, `EXAMINE` | The unknown description (`DESC`, else "You cannot tell what it is."), the unknown name of a container and of what is in it. Examining an unknown raw-material bundle does not say what it is a bundle of |
+| `LOOK FOR` | The unknown name, numbered among the things they take for the same thing |
+| A shopkeeper | `LIST`, `VIEW` and its answer to `VALUE` use the unknown name; the price it pays follows the property's `VALUE` |
+| `APPRAISE`, identification | The unknown name and the seeming value; identifying says "you cannot tell what it is" until a way in `REVEAL` teaches it |
+| `LOOT`, `LOOT SELF` | The unknown name of each item and of the container it is in |
+| `ITEMMODS`, `MODCRAFT` (`POOL`, `PREVIEW`, `PREPARE`, `STATUS`), `CHOICES` | The unknown name of the item worked on. An open offering keeps the name the character offered it by |
+| `OFFERS` | The unknown name of an offered catalog item of the kind, and of the one bought |
+| `COMPOSE SHOW`, `COMBATRESULT STATS` | The unknown name of worn gear among the stat sources |
+
+The item itself does not change: its real name is what builder tools (the
+item editors, `WORLD COMBAT STATS`), logs and saves use.
+
 ## Item rejuvenation
 
 "Rejuvenation" is what brings an item back after it was removed. The **Rejuv**

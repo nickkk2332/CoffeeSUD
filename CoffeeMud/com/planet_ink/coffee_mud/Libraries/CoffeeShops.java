@@ -207,6 +207,12 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		return V;
 	}
 
+	/** A23: the name of a thing for sale as the customer knows it (an item of a kind they must learn shows its unknown name) */
+	protected String seenName(final MOB viewerM, final Environmental E)
+	{
+		return (E instanceof Item)?((Item)E).name(viewerM):E.name();
+	}
+
 	protected String getSellableElectronicsName(final MOB viewerM, final Electronics E)
 	{
 		String baseName=E.name(viewerM);
@@ -254,7 +260,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		final int lieHash = E.name().hashCode();
 		int level = 1;
 		if(!flags.contains(ViewType.BASIC))
-			str.append(L("It is '@x1'.",E.name()));
+			str.append(L("It is '@x1'.",seenName(viewerM,E)));
 		else
 		{
 			if(E instanceof Ability)
@@ -452,7 +458,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 						str.append(L("\n\rLayer      : ") + ((Armor)I).getClothingLayer());
 				}
 			}
-			str.append(L("\n\rDescription: @x1",E.description()));
+			str.append(L("\n\rDescription: @x1",(E instanceof Item)?((Item)E).description(viewerM):E.description())); // A23
 		}
 		if((flags.contains(ViewType.IDENTIFY))
 		&&(E instanceof Item))
@@ -1356,18 +1362,18 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 				final ShopKeeper.ShopPrice price=sellingPrice(sellerShopM,priceM,product,shop,shopItems, true);
 				if((price.experiencePrice>0)&&(price.experiencePrice>buyerCustM.getExperience()))
 				{
-					CMLib.commands().postSay(sellerShopM,buyerCustM,L("You aren't experienced enough to buy @x1.",product.name()),false,false);
+					CMLib.commands().postSay(sellerShopM,buyerCustM,L("You aren't experienced enough to buy @x1.",seenName(buyerCustM,product)),false,false);
 					return false;
 				}
 				if((price.questPointPrice>0)&&(price.questPointPrice>buyerCustM.getQuestPoint()))
 				{
-					CMLib.commands().postSay(sellerShopM,buyerCustM,L("You don't have enough quest points to buy @x1.",product.name()),false,false);
+					CMLib.commands().postSay(sellerShopM,buyerCustM,L("You don't have enough quest points to buy @x1.",seenName(buyerCustM,product)),false,false);
 					return false;
 				}
 				if((price.absoluteGoldPrice>0.0)
 				&&(price.absoluteGoldPrice>CMLib.beanCounter().getTotalAbsoluteShopKeepersValue(buyerCustM,sellerShopM)))
 				{
-					CMLib.commands().postSay(sellerShopM,buyerCustM,L("You can't afford to buy @x1.",product.name()),false,false);
+					CMLib.commands().postSay(sellerShopM,buyerCustM,L("You can't afford to buy @x1.",seenName(buyerCustM,product)),false,false);
 					return false;
 				}
 			}
@@ -1518,7 +1524,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 		{
 			E=rawInventory.get(i);
 			if(shownInInventory(seller,buyer,E,shop)
-			&&((mask==null)||(mask.length()==0)||(CMLib.english().containsString(E.name(),mask))))
+			&&((mask==null)||(mask.length()==0)||(CMLib.english().containsString(E.name(),mask))||(CMLib.english().containsString(seenName(buyer,E),mask))))
 				inventory.add(E);
 		}
 
@@ -1598,8 +1604,9 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 						num = 1;
 					col += CMStrings.padRight(""+num,4)+" ";
 				}
-				col += CMStrings.padRightPreserve("^<SHOP^>"+E.name()+"^.^N^</SHOP^>"+(Prop_StockZapper.allowed(E,buyer)?"":" (restricted)"),prodWidth);
-				if(E.name().length()>=prodWidth)
+				final String seen=seenName(buyer,E); // A23: as the customer knows it
+				col += CMStrings.padRightPreserve("^<SHOP^>"+seen+"^.^N^</SHOP^>"+(Prop_StockZapper.allowed(E,buyer)?"":" (restricted)"),prodWidth);
+				if(seen.length()>=prodWidth)
 				{
 					if(colNum>0)
 						str.append("\n\r");
@@ -1748,7 +1755,7 @@ public class CoffeeShops extends StdLibrary implements ShoppingLibrary
 				CMLib.beanCounter().subtractMoney(shopkeeper,currency,val);
 			CMLib.beanCounter().giveSomeoneMoney(shopkeeper,pawner,currency,val);
 			pawner.recoverPhyStats();
-			pawner.tell(L("@x1 pays you @x2 for @x3.",shopkeeper.name(),CMLib.beanCounter().nameCurrencyShort(shopkeeper,val),rawSoldItem.name()));
+			pawner.tell(L("@x1 pays you @x2 for @x3.",shopkeeper.name(),CMLib.beanCounter().nameCurrencyShort(shopkeeper,val),seenName(pawner,rawSoldItem)));
 			if(rawSoldItem instanceof Item)
 			{
 				List<Item> V=null;

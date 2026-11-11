@@ -1087,7 +1087,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			else
 			{
 				if(M.phyStats().height()>0)
-					response.append(L("\n\r@x1 is @x2 inches tall and weighs @x3 pounds.\n\r",CMStrings.capitalizeFirstLetter(item.name()),""+M.phyStats().height(),weight));
+					response.append(L("\n\r@x1 is @x2 inches tall and weighs @x3 pounds.\n\r",CMStrings.capitalizeFirstLetter(item.name(mob)),""+M.phyStats().height(),weight));
 				if((mob==null)||(!mob.isMonster()))
 					response.append(CMLib.protocol().mxpImage(M," ALIGN=RIGHT H=70 W=70"));
 				response.append(M.healthText(mob)+"\n\r\n\r");
@@ -1102,7 +1102,8 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			&&(!CMLib.flags().isABonusItems(item))
 			&&(item.rawSecretIdentity().length()>0)
 			&&(item.basePhyStats().weight()>1)
-			&&((mob==null)||(mobInt>3)))
+			&&((mob==null)||(mobInt>3))
+			&&(ItemKnowledge.knows(mob,item))) // A23: not what an unknown bundle is
 				response.append(L("It appears to be a bundle of `@x1`.  ",item.rawSecretIdentity()));
 
 			if((mob!=null)&&(mobInt<10))
@@ -1564,7 +1565,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			));
 		}
 		if(item.description(mob).length()==0)
-			buf.append(L("You don't see anything special about @x1.",item.name()));
+			buf.append(L("You don't see anything special about @x1.",item.name(mob)));
 		else
 			buf.append(item.description(mob));
 		if((msg.targetMinor()==CMMsg.TYP_EXAMINE)
@@ -1581,7 +1582,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			{
 				if((contitem.hasContent())
 				||((contitem instanceof Drink)&&(((Drink)contitem).containsLiquid())))
-					buf.append(item.name()+" contains:^<!ENTITY container \""+CMStrings.removeColors(item.name())+"\"^>"+(mob.isAttributeSet(MOB.Attrib.COMPRESS)?" ":"\n\r"));
+					buf.append(item.name(mob)+" contains:^<!ENTITY container \""+CMStrings.removeColors(item.name(mob))+"\"^>"+(mob.isAttributeSet(MOB.Attrib.COMPRESS)?" ":"\n\r")); // A23
 				final List<Item> newItems=new ArrayList<Item>(0);
 				if((item instanceof LiquidHolder)
 				&&(((LiquidHolder)item).liquidRemaining()>0))
@@ -1630,7 +1631,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 			}
 			else
 			if((contitem.hasADoor())&&((contitem.capacity()>0)||(contitem.hasContent())))
-				buf.append(L("@x1 is closed.",item.name()));
+				buf.append(L("@x1 is closed.",item.name(mob)));
 		}
 		if(!msg.source().isMonster())
 			buf.append(CMLib.protocol().mxpImage(item," ALIGN=RIGHT H=70 W=70"));
@@ -1850,7 +1851,8 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 						&&(item.displayText(mob).length()==0)
 						&&(flags.canBeSeenBy(item,mob)))
 						{
-							keyWords=CMParms.parse(item.name().toUpperCase());
+							final String seenName=item.name(mob); // A23: what the viewer knows it as
+							keyWords=CMParms.parse(seenName.toUpperCase());
 							for(int k=0;k<keyWords.size();k++)
 							{
 								word=keyWords.elementAt(k);
@@ -1876,7 +1878,7 @@ public class CommonMsgs extends StdLibrary implements CommonCommands
 											while((end<roomDesc.length())&&(!Character.isWhitespace(roomDesc.charAt(end))))
 												end++;
 											final int l=roomDesc.length();
-											roomDesc=roomDesc.substring(0,start)+"^H^<WItem \""+CMStrings.removeColors(item.name())+"\"^>"+roomDesc.substring(start,end)+"^</WItem^>^?"+roomDesc.substring(end);
+											roomDesc=roomDesc.substring(0,start)+"^H^<WItem \""+CMStrings.removeColors(seenName)+"\"^>"+roomDesc.substring(start,end)+"^</WItem^>^?"+roomDesc.substring(end);
 											x=x+(roomDesc.length()-l);
 										}
 									}

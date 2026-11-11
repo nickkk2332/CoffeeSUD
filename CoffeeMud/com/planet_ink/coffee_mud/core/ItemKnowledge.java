@@ -87,10 +87,10 @@ public final class ItemKnowledge
 		return knows(viewer, I) ? real : parm(prop(I), "NAME", "something unfamiliar");
 	}
 
-	/** the look in the room a viewer sees */
+	/** the look in the room a viewer sees; an item with no look (one the room's description names) still has none */
 	public static String display(final MOB viewer, final Item I, final String real)
 	{
-		if(knows(viewer, I))
+		if(knows(viewer, I) || (real == null) || real.isEmpty())
 			return real;
 		final String d = parm(prop(I), "DISPLAY", "");
 		return d.isEmpty() ? CMStrings.capitalizeFirstLetter(parm(prop(I), "NAME", "something unfamiliar")) + " lies here." : d;

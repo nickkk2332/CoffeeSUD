@@ -157,6 +157,11 @@ public final class CombatProfiles
 	}
 	private static void collect(final Physical host, final List<Stats> values, final List<String> sources) throws IOException
 	{
+		collect(host, values, sources, null);
+	}
+	/** a host's combat stat sources, an item named as the viewer knows it (A23; no viewer, its real name) */
+	private static void collect(final Physical host, final List<Stats> values, final List<String> sources, final MOB viewer) throws IOException
+	{
 		for(final Enumeration<Ability> e = host.effects(); e.hasMoreElements();)
 		{
 			final Ability a = e.nextElement();
@@ -166,7 +171,7 @@ public final class CombatProfiles
 					throw new IOException("at most 64 active combat stat sources per actor");
 				final Stats delta = ((CombatStatSource)a).combatStats();
 				values.add(delta);
-				final String label=host.Name().replaceAll("[\\p{Cntrl}<>^]", "");
+				final String label=(((viewer != null) && (host instanceof Item)) ? host.name(viewer) : host.Name()).replaceAll("[\\p{Cntrl}<>^]", "");
 				sources.add(label + ": " + delta.describe());
 				final List<String> details=((CombatStatSource)a).combatStatDetails();
 				for(int i=0;i<Math.min(6,details.size());i++)
@@ -176,21 +181,31 @@ public final class CombatProfiles
 	}
 	public static Collected stats(final MOB actor, final Profile p) throws IOException
 	{
+		return stats(actor, p, null);
+	}
+	private static Collected stats(final MOB actor, final Profile p, final MOB viewer) throws IOException
+	{
 		final List<Stats> values = new ArrayList<Stats>();
 		final List<String> sources = new ArrayList<String>();
-		collect(actor, values, sources);
+		collect(actor, values, sources, viewer);
 		for(final Enumeration<Item> e = actor.items(); e.hasMoreElements();)
 		{
 			final Item item = e.nextElement();
 			if(item.owner() == actor && item.container() == null && item.rawWornCode() != Wearable.IN_INVENTORY)
-				collect(item, values, sources);
+				collect(item, values, sources, viewer);
 		}
 		return new Collected(CombatRules.combine(p.defaults, values), sources);
 	}
+	/** a character's merged stats and their sources, by real names (WORLD COMBAT STATS, LEDGER) */
 	public static String describeStats(final MOB actor) throws IOException
 	{
+		return describeStats(actor, null);
+	}
+	/** the same, the gear named as the viewer knows it (A23): COMBATRESULT STATS and COMPOSE SHOW */
+	public static String describeStats(final MOB actor, final MOB viewer) throws IOException
+	{
 		final Profile p = current();
-		final Collected c = stats(actor, p);
+		final Collected c = stats(actor, p, viewer);
 		return p.title + " (" + p.key() + ")\nMerged stats: " + c.stats.describe() + "\nSources: " + c.sources;
 	}
 	public static List<String> checkProperties(final Collection<Room> rooms)
@@ -269,7 +284,7 @@ public final class CombatProfiles
 	{
 		final Profile p = current();
 		final Offense offense = CombatRules.offense(c, Collections.<String>emptySet(), p.conversion);
-		return c.describeDamage(offense.damage, "Profile " + p.key() + ", " + p.conversion + " conversion") + "\n" + describeStats(actor)
+		return c.describeDamage(offense.damage, "Profile " + p.key() + ", " + p.conversion + " conversion") + "\n" + describeStats(actor, actor)
 			+ "\nDamage shown is before criticals, target conditions/defenses and external world rules. COMBATRESULT explains resolved events.";
 	}
 	public interface Budget

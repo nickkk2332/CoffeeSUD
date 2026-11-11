@@ -683,14 +683,15 @@ public final class ItemLoot
 			if((I == null) || I.amDestroyed())
 				continue;
 			final String[] cat = category(I, lib);
-			final String where = (I.container() != null) ? " (in " + I.container().Name() + ")" : !I.amWearingAt(Wearable.IN_INVENTORY) ? " (worn)" : "";
+			// A23: each named as the viewer knows it
+			final String where = (I.container() != null) ? " (in " + I.container().name(viewer) + ")" : !I.amWearingAt(Wearable.IN_INVENTORY) ? " (worn)" : "";
 			if(!filter.isEmpty() && !filter.contains(cat[0]))
 			{
-				left.add(I.Name() + where + ": " + cat[1] + " (" + cat[0] + "), and your filter shows " + String.join(", ", filter));
+				left.add(I.name(viewer) + where + ": " + cat[1] + " (" + cat[0] + "), and your filter shows " + String.join(", ", filter));
 				continue;
 			}
 			shown++;
-			s.append("\n  ").append(cat[1]).append(": ").append(I.Name()).append(where).append(modsOf(I));
+			s.append("\n  ").append(cat[1]).append(": ").append(I.name(viewer)).append(where).append(modsOf(I));
 		}
 		if(shown == 0)
 			s.append("\n  nothing your filter shows");
@@ -722,10 +723,10 @@ public final class ItemLoot
 		if(!enabled())
 			throw new IOException("loot policies (" + MODULE + ") are not active in this campaign");
 		if(!(host instanceof Container))
-			throw new IOException(host.Name() + " holds nothing");
+			throw new IOException(host.name(viewer) + " holds nothing");
 		final Container C = (Container)host;
 		if(C.hasADoor() && !C.isOpen() && !(host instanceof DeadBody))
-			return host.Name() + " is closed.";
+			return host.name(viewer) + " is closed.";
 		final List<Item> inside = new ArrayList<Item>();
 		final ItemPossessor owner = host.owner();
 		if(owner instanceof Room)
@@ -749,7 +750,7 @@ public final class ItemLoot
 		}
 		final List<String> filter = filterOf(viewer);
 		final Library<Policy> lib = definitions();
-		final StringBuilder s = new StringBuilder("In ").append(host.Name()).append(':');
+		final StringBuilder s = new StringBuilder("In ").append(host.name(viewer)).append(':'); // A23: names as the viewer knows them
 		int hidden = 0, plain = 0, shown = 0;
 		for(final Item I : inside)
 		{
@@ -759,7 +760,7 @@ public final class ItemLoot
 				if(filter.contains(PLAIN))
 				{
 					shown++;
-					s.append("\n  Untracked: ").append(I.Name());
+					s.append("\n  Untracked: ").append(I.name(viewer));
 				}
 				else
 					plain++;
@@ -781,7 +782,7 @@ public final class ItemLoot
 				}
 			}
 			shown++;
-			s.append("\n  ").append(title).append(": ").append(I.Name());
+			s.append("\n  ").append(title).append(": ").append(I.name(viewer));
 			final List<String> mods = new ArrayList<String>();
 			final JSONObject rec = ItemModifierRules.parse(I.fetchEffect(ItemModifiers.PROPERTY).text());
 			for(final JSONObject m : ItemModifierRules.modifiers(rec))
