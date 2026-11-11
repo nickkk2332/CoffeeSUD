@@ -502,7 +502,7 @@ LEAVE|The Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide
 | --- | --- |
 | `TAG\|org\|tag...` | An organization's tags. Its own name and its type's `CATEGORY` are tags of it too. |
 | `CONFLICT\|tag\|tag` | Two tags that cannot be held together, either way: joining an organization of one while in one of the other is refused, however the joining comes about (`CLANAPPLY`, a guildmaster, a script), so rejoining too. A promotion within one is no joining. |
-| `KEEP\|org\|mask` | What a member must keep passing. It is checked again whenever their class changes; failing it, they leave and are told why. |
+| `KEEP\|org\|mask` | What a member must keep passing. It is checked again whenever their class, race or level changes, and every 75 ticks of play (for what else a mask tests: factions, tattoos, time); failing it, they leave and are told why. |
 | `LEAVE\|org\|...` | What leaving takes away, however it comes about: `TATTOOS=` and `ABILITIES=` (their effects end too). The government's own grants by level follow membership already. |
 
 The refusal says which two cannot be held together and by which tags.

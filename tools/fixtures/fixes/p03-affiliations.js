@@ -16,9 +16,9 @@ try {
 	var hand = makeOrg("Fixp03 Night Hand"), watch = makeOrg("Fixp03 City Watch");
 	Files.write(new java.io.File(root, "affiliations.ini").toPath(), new java.lang.String(
 		"# the night hand and the watch\nTAG|Fixp03 Night Hand|OUTLAW\nTAG|Fixp03 City Watch|LAWFUL\nCONFLICT|OUTLAW|LAWFUL\n"
-		+ "KEEP|Fixp03 City Watch|-CLASSES +Fighter\nLEAVE|Fixp03 Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide\nnot a rule\n").getBytes("UTF-8"));
+		+ "KEEP|Fixp03 City Watch|-CLASSES +Fighter\nKEEP|Fixp03 Night Hand|-RACES +Human +Halfling\nLEAVE|Fixp03 Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide\nnot a rule\n").getBytes("UTF-8"));
 	WorldFiles.configure(root);
-	check("problems", s(AF.rules().problems).indexOf("line 7: not a rule") >= 0, s(AF.rules().problems));
+	check("problems", s(AF.rules().problems).indexOf("line 8: not a rule") >= 0, s(AF.rules().problems));
 	var P = CMClass.getMOB("StdMOB"); P.setName("Fixp03 Pip"); P.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
 	P.baseCharStats().setMyRace(CMClass.getRace("Human")); P.baseCharStats().setCurrentClass(CMClass.getCharClass("Fighter")); P.recoverCharStats(); P.bringToLife(M.location(), true); made.push(P);
 	var role = G.getAcceptPos();
@@ -45,6 +45,9 @@ try {
 	check("class-change", !member(watch, P), "a thief stayed in the watch");
 	hand.addMember(P, role);
 	check("rejoin-allowed", member(hand, P), "could not rejoin the night hand once out of the watch");
+	// a race change checks KEEP again too (as a class or level change does)
+	P.baseCharStats().setMyRace(CMClass.getRace("Elf")); P.recoverCharStats();
+	check("race-change", !member(hand, P), "an elf stayed in the night hand");
 	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
 	var ref = CM.core.Provenance.lastRefusal(P), ev = evs(P);
 	check("ledger", ref != null && s(ref.describe()).indexOf("affiliations.ini CONFLICT") >= 0 && ev.indexOf("took away") >= 0 && ev.indexOf("left Fixp03 City Watch") >= 0,

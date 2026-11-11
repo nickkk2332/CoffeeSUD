@@ -49,6 +49,8 @@ public final class FormationRoles
 
 	public static final String	FAMILY	= "formations";
 	private static final String	PREFIX	= "ROLE_";
+	/** worn by a member that fell back, until it returns to its role's row */
+	private static final String	BACK	= "ROLEBACK";
 	private static final List<String>	TARGETS	= Arrays.asList("LEADER", "WEAKEST", "STRONGEST", "CASTER", "ATTACKER");
 
 	/** @return world/formations.ini, or null with no world folder */
@@ -147,7 +149,7 @@ public final class FormationRoles
 		if(!R.get("INTERCEPT").isEmpty())
 			s.add(CMLib.lang().L("draws an attacker off @x1 at or below @x2% hit points", guardsWord(R), R.get("INTERCEPT")));
 		if(!R.get("FALLBACK").isEmpty())
-			s.add(CMLib.lang().L("falls back to the rear below @x1% hit points", R.get("FALLBACK")));
+			s.add(CMLib.lang().L("falls back to the rear below @x1% hit points, and returns when healed or when the fight ends", R.get("FALLBACK")));
 		return String.join("; ", s);
 	}
 
@@ -222,6 +224,9 @@ public final class FormationRoles
 			return "";
 		final List<String> did = new ArrayList<String>();
 		final MOB P = guarded(M, R, group);
+		// healed again: back to its role's row
+		if((M.findTattoo(BACK) != null) && !R.get("FALLBACK").isEmpty() && (share(M) >= CMath.s_int(R.get("FALLBACK"))))
+			did.add(returned(M, R));
 		// a guard draws one attacker off the one it guards, when they are hurt enough
 		if((P != null) && !R.get("INTERCEPT").isEmpty() && (share(P) <= CMath.s_int(R.get("INTERCEPT"))))
 		{
@@ -232,6 +237,7 @@ public final class FormationRoles
 					M.location().show(M, P, F, CMMsg.MSG_OK_ACTION, CMLib.lang().L("<S-NAME> step(s) in front of <T-NAME>, drawing <O-NAME>'s attacks."));
 					F.setVictim(M);
 					M.setVictim(F);
+					CombatDebug.note(M, F, "role " + R.name() + ": draws " + F.name() + " off " + P.name() + " (" + share(P) + "% hit points, at or below " + R.get("INTERCEPT") + "%)");
 					ModuleStats.count(FAMILY, R.id.toLowerCase(Locale.ROOT), "interceptions");
 					did.add("intercepted " + F.Name());
 					break;
@@ -250,6 +256,8 @@ public final class FormationRoles
 			{
 				final int back = deepest + 1;
 				M.amFollowing().addFollower(M, back);
+				M.addTattoo(BACK);
+				CombatDebug.note(M, M.getVictim(), "role " + R.name() + ": falls back to row " + back + " (" + share(M) + "% hit points, below " + R.get("FALLBACK") + "%)");
 				M.location().show(M, null, CMMsg.MSG_OK_ACTION, CMLib.lang().L("<S-NAME> fall(s) back."));
 				ModuleStats.count(FAMILY, R.id.toLowerCase(Locale.ROOT), "fallbacks");
 				Provenance.event(M, FAMILY, "formations.ini [" + R.id + "]", "fell back to row " + back + " below " + R.get("FALLBACK") + "% hit points");
@@ -262,11 +270,58 @@ public final class FormationRoles
 			final MOB T = pick(M, R, P, foes);
 			if((T != null) && (T != M.getVictim()))
 			{
+				final MOB was = M.getVictim();
 				M.setVictim(T);
 				did.add("turned on " + T.Name());
+				CombatDebug.note(M, T, "role " + R.name() + ": turns on " + T.name() + (was == null ? "" : " from " + was.name()) + " (" + why(R, T) + ")");
 			}
 		}
 		return String.join("; ", did);
+	}
+
+	/** why a role's TARGET picked a foe, in words, for COMBATDEBUG */
+	private static String why(final Origin R, final MOB T)
+	{
+		final String t = R.get("TARGET").isEmpty() ? "LEADER" : R.get("TARGET").toUpperCase(Locale.ROOT);
+		switch(t)
+		{
+		case "WEAKEST":
+			return "the most wounded foe, " + share(T) + "% hit points";
+		case "STRONGEST":
+			return "the least wounded foe, " + share(T) + "% hit points";
+		case "CASTER":
+			return "the foe with the most mana, " + T.curState().getMana();
+		case "ATTACKER":
+			return "it attacks the one it guards";
+		default:
+			return "the leader's foe";
+		}
+	}
+
+	/** a member that fell back takes its role's row again */
+	private static String returned(final MOB M, final Origin R)
+	{
+		M.delTattoo(BACK);
+		final int row = Math.max(0, CMath.s_int(R.get("ROW")));
+		if(M.amFollowing() != null)
+			M.amFollowing().addFollower(M, row);
+		if(M.location() != null)
+			M.location().show(M, null, CMMsg.MSG_OK_ACTION, CMLib.lang().L("<S-NAME> return(s) to <S-HIS-HER> place in the formation."));
+		CombatDebug.note(M, M.getVictim(), "role " + R.name() + ": returns to row " + row);
+		Provenance.event(M, FAMILY, "formations.ini [" + R.id + "]", "returned to row " + row);
+		return "returned to row " + row;
+	}
+
+	/** a fight ends: a member that fell back returns to its row */
+	public static void fightEnded(final MOB M)
+	{
+		if((M == null) || (M.findTattoo(BACK) == null))
+			return;
+		final Origin R = of(M);
+		if(R == null)
+			M.delTattoo(BACK);
+		else
+			returned(M, R);
 	}
 
 	private static MOB pick(final MOB M, final Origin R, final MOB P, final List<MOB> foes)
@@ -323,6 +378,7 @@ public final class FormationRoles
 		}
 		for(final String t : had)
 			who.delTattoo(t);
+		who.delTattoo(BACK);
 		if(R == null)
 			return CMLib.lang().L("@x1 has no role now.", who.name());
 		who.addTattoo(PREFIX + R.id.toUpperCase(Locale.ROOT));

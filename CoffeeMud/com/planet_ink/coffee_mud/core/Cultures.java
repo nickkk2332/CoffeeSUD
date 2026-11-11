@@ -30,8 +30,11 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  * adopt it), ABILITIES (ID and proficiency, languages too), TATTOOS, ADOPT
  * (COMMAND: the CULTURE ADOPT command may adopt it; otherwise an origin's
  * CULTURE=, a script or a mentor), LEAVE (NEVER: it cannot be left but by a
- * script's FORCE) and KEEP (abilities that stay on leaving, as a mother
- * tongue).  A character holds one culture at a time, kept as the tattoo
+ * script's FORCE), KEEP (abilities that stay on leaving, as a mother
+ * tongue), TRAINED (KEEP, the default: an ability trained past what the
+ * culture gave stays on leaving; LOSE: it goes too), SPEAKS (a language the
+ * character speaks once adopted) and CREATION (YES: offered at the CULTURE
+ * step of character creation).  A character holds one culture at a time, kept as the tattoo
  * CULTURE_[ID].  Adopting gives only what they did not have, and records
  * what it gave in their story records, so leaving takes away exactly that
  * (KEEP aside): what they had before or learned otherwise is theirs.  At
@@ -161,6 +164,7 @@ public final class Cultures
 		if(current(M) != null)
 			said.append(leave(M, how)).append(' ');
 		final List<String> gave = new ArrayList<String>(), tattoos = new ArrayList<String>(), names = new ArrayList<String>();
+		final MiniJSON.JSONObject profs = new MiniJSON.JSONObject();
 		for(final String entry : words(C.get("ABILITIES")))
 		{
 			final List<String> w = CMParms.parse(entry);
@@ -176,6 +180,7 @@ public final class Cultures
 			M.addAbility(A);
 			A.autoInvocation(M, false);
 			gave.add(A.ID());
+			profs.put(A.ID(), Long.valueOf(A.proficiency()));
 			names.add(A.name());
 		}
 		for(final String t : CMParms.parseAny(C.get("TATTOOS").replace(',', ' '), ' ', true))
@@ -191,8 +196,22 @@ public final class Cultures
 		final MiniJSON.JSONObject rec = StoryRecords.object(data, RECORD);
 		rec.put("current", C.id.toUpperCase(Locale.ROOT));
 		rec.put("gave", gave.toArray());
+		rec.put("profs", profs);
 		rec.put("tattoos", tattoos.toArray());
 		history(rec, C.id, how, "adopted");
+		// the language it speaks, once taken up
+		final String speaks = C.get("SPEAKS");
+		if(speaks.length() > 0)
+		{
+			final Ability L = M.fetchAbility(speaks);
+			if(L != null)
+			{
+				L.autoInvocation(M, false);
+				L.invoke(M, null, false, 0); // not auto: it switches the language spoken (the effect), and tells them
+			}
+			else
+				Log.errOut("Cultures", "cultures.ini [" + C.id + "] SPEAKS: " + M.Name() + " has no language " + speaks);
+		}
 		StoryRecords.write(M, data);
 		ModuleStats.count(FAMILY, C.id.toLowerCase(Locale.ROOT), "adopted by " + how.toLowerCase(Locale.ROOT));
 		Provenance.event(M, FAMILY, "cultures.ini [" + C.id + "]", "took up " + C.name() + " (" + how.toLowerCase(Locale.ROOT) + ")" + (names.isEmpty() ? "" : "; it gave " + String.join(", ", names)));
@@ -232,6 +251,8 @@ public final class Cultures
 		final MiniJSON.JSONObject rec = StoryRecords.object(data, RECORD);
 		final Set<String> keep = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 		keep.addAll(words(C.get("KEEP")));
+		final boolean keepTrained = !C.get("TRAINED").equalsIgnoreCase("LOSE");
+		final MiniJSON.JSONObject profs = (rec.get("profs") instanceof MiniJSON.JSONObject) ? (MiniJSON.JSONObject)rec.get("profs") : new MiniJSON.JSONObject();
 		final List<String> gone = new ArrayList<String>(), kept = new ArrayList<String>();
 		for(final String id : strings(rec.get("gave")))
 		{
@@ -241,6 +262,12 @@ public final class Cultures
 			if(keep.contains(A.ID()))
 			{
 				kept.add(A.name());
+				continue;
+			}
+			// trained past what the culture gave: the training is theirs
+			if(keepTrained && (profs.get(A.ID()) instanceof Number) && (A.proficiency() > ((Number)profs.get(A.ID())).intValue()))
+			{
+				kept.add(CMLib.lang().L("@x1 (trained past what it gave)", A.name()));
 				continue;
 			}
 			final Ability E = M.fetchEffect(A.ID());
@@ -257,6 +284,7 @@ public final class Cultures
 		M.delTattoo(tattoo(C));
 		rec.put("current", "");
 		rec.put("gave", new Object[0]);
+		rec.put("profs", new MiniJSON.JSONObject());
 		rec.put("tattoos", new Object[0]);
 		history(rec, C.id, how, "left");
 		StoryRecords.write(M, data);
@@ -267,6 +295,70 @@ public final class Cultures
 			s.append(' ').append(CMLib.lang().L("It takes away: @x1.", String.join(", ", gone)));
 		if(!kept.isEmpty())
 			s.append(' ').append(CMLib.lang().L("You keep: @x1.", String.join(", ", kept)));
+		return s.toString();
+	}
+
+	/** the cultures the CULTURE step of character creation offers someone: CREATION=YES, and theirs to take */
+	public static List<Origin> creationChoices(final MOB M)
+	{
+		final List<Origin> out = new ArrayList<Origin>();
+		for(final Origin C : all())
+		{
+			if(C.get("CREATION").equalsIgnoreCase("YES") && why(M, C, "creation").isEmpty())
+				out.add(C);
+		}
+		return out;
+	}
+
+	/** the culture chosen at the CULTURE step, kept as a tattoo until creation ends */
+	public static void pick(final MOB M, final Origin C)
+	{
+		for(final Origin O : all())
+			M.delTattoo("CULTUREPICK_" + O.id.toUpperCase(Locale.ROOT));
+		if(C != null)
+			M.addTattoo("CULTUREPICK_" + C.id.toUpperCase(Locale.ROOT));
+	}
+
+	/** the culture chosen at the CULTURE step, or null */
+	public static Origin picked(final MOB M)
+	{
+		for(final Origin O : all())
+		{
+			if(M.findTattoo("CULTUREPICK_" + O.id.toUpperCase(Locale.ROOT)) != null)
+				return O;
+		}
+		return null;
+	}
+
+	/** at the end of creation, after the origin's gifts: the chosen culture is taken up by the same rules as later */
+	public static void applyPick(final MOB M)
+	{
+		final Origin C = picked(M);
+		if(C == null)
+			return;
+		pick(M, null);
+		try
+		{
+			M.tell(adopt(M, C.id, "creation"));
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("Cultures", M.Name() + ": the culture chosen at creation, " + C.name() + ": " + e.getMessage());
+		}
+	}
+
+	/** the CULTURE step's menu */
+	public static String menu(final List<Origin> choices)
+	{
+		final StringBuilder s = new StringBuilder(CMLib.lang().L("\n\r^!Please choose a culture:^N\n\r"));
+		for(int i = 0; i < choices.size(); i++)
+		{
+			final Origin O = choices.get(i);
+			s.append("^H").append(i + 1).append(") ").append(O.name()).append("^N");
+			if(O.get("DESCRIPTION").length() > 0)
+				s.append(": ").append(O.get("DESCRIPTION"));
+			s.append("\n\r");
+		}
 		return s.toString();
 	}
 

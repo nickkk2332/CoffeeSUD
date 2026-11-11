@@ -156,6 +156,7 @@ character of a profile is always allowed. See
 | 5 | `STATS` | Random roll, point buy, fixed or scripted, by `STARTSTAT`. Runs `STATS` scripts | `STARTSTAT`, `MAXSTATS`, `BASEMINSTAT`, `BASEMAXSTAT` |
 | 6 | `CLASS` | Pick from the classes whose requirements the stats and race meet. Sets level 1, gives `STARTINGITEMS`, the race outfit and a random allergy. Runs `CLASS` scripts | `CLASSSYSTEM`, class qualifications, `DISABLE=CLASSES` |
 | 7 | `ORIGIN` | Asked when `origins.ini` has an origin open to the character | [origins.ini](#originsini-origins) |
+| 7a | `CULTURE` | Only when listed in `STEPS`: asked when `cultures.ini` has a culture with `CREATION=YES` the character may take up | [cultures.ini](#culturesini-cultures) |
 | 8 | `KIT` | A menu for each `choose` group of starting kits that fits the character; a lone kit in a group is taken without asking | [Kits](#kits) |
 | 9 | `TRAITS` | Take or drop traits and flaws from `perks.ini` by name, then `DONE`; the points must not be overspent (skipped when no trait is open to the character, or `TRAITS=RANDOM`/`SKIP`) | [perks.ini](#perksini-perks-traits-and-flaws) |
 | 10 | World questions | `creation.ini` `[NAME]` sections, wherever `STEPS` puts them | [creation.ini](#creationini-steps-and-questions) |
@@ -166,7 +167,7 @@ character of a profile is always allowed. See
 
 Steps 3 to 6, 11 and 12 keep this relative order whatever `creation.ini` says
 (each needs the one before; for example, class qualification needs the stats).
-`ORIGIN`, `KIT`, `TRAITS` and the world's questions can be placed anywhere that
+`ORIGIN`, `CULTURE`, `KIT`, `TRAITS` and the world's questions can be placed anywhere that
 keeps that order; by default they come right after `CLASS`.
 
 Races, genders, stats and classes can each be left unasked: `creation.ini`
@@ -182,7 +183,9 @@ applies, in this order:
 
 1. The origin's gifts (`ORIGIN`): start room, items, abilities, standing,
    tattoos, money and script.
-2. `CHARCREATIONSCRIPTS` `ORIGIN:` scripts.
+2. `CHARCREATIONSCRIPTS` `ORIGIN:` scripts, then the culture chosen at the
+   `CULTURE` step, taken up by the same rules as later (after the origin's
+   `CULTURE`, so it is the one held).
 3. Every starting kit that fits and is not a menu choice, and the kits chosen.
 4. The world questions' answers (`EFFECTS`, `FACTION`, `START`, `SCRIPT`).
 5. The traits' and flaws' rewards.
@@ -509,6 +512,9 @@ in play. `world/cultures.ini` has an `[ID]` section for each, in the format of
 | `ADOPT` | `COMMAND`: the player may take it up with `CULTURE ADOPT`. Otherwise it comes from an origin, a script or a mentor (`MPCULTURE`) |
 | `LEAVE` | `NEVER`: it cannot be left, nor another adopted, but by a script's `FORCE` |
 | `KEEP` | Abilities that stay on leaving, as a mother tongue |
+| `TRAINED` | `KEEP` (the default): an ability trained past what the culture gave stays on leaving, at its trained proficiency. `LOSE`: it goes too |
+| `SPEAKS` | A language the character speaks once they take the culture up (one it gave, or theirs already) |
+| `CREATION` | `YES`: offered at the `CULTURE` step of character creation (list `CULTURE` in `creation.ini`'s `STEPS`) |
 
 The rules, the same at creation and later:
 
@@ -518,8 +524,9 @@ The rules, the same at creation and later:
 - Adopting gives only what the character lacks, and records what it gave in
   their story records (saved with them). An ability they had already, or learn
   otherwise, is theirs: the culture neither raises it nor takes it.
-- Leaving takes away exactly what it gave, but `KEEP`, and the tattoos it
-  gave. Adopting again gives again what is missing.
+- Leaving takes away exactly what it gave, but `KEEP` and what was trained past
+  the culture's gift (unless `TRAINED=LOSE`), and the tattoos it gave.
+  Adopting again gives again what is missing.
 - Each adopting and leaving, and how (`origin`, `command`, `script`, `force`),
   is kept in the story records' history (the last 20).
 

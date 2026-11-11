@@ -382,7 +382,7 @@ INTERCEPT=100
 | `TARGET` | Whom it fights: `LEADER` (the leader's foe, the default), `WEAKEST` (the foe with the least share of its hit points), `STRONGEST` (the most), `CASTER` (the foe with the most mana), `ATTACKER` (a foe attacking the one it guards) |
 | `GUARDS` | Whom it guards: `LEADER` (the default) or a role, the member who holds it |
 | `INTERCEPT` | A share of hit points: when the one it guards is at or below it, the role draws one of their attackers on to itself, each round (`100`: always) |
-| `FALLBACK` | A share of hit points: below it, the role steps behind everyone (a row of its own at the rear), and stays there until moved |
+| `FALLBACK` | A share of hit points: below it, the role steps behind everyone (a row of its own at the rear); it returns to the role's row when a round finds it at or above that share again, or when the fight ends |
 
 `FORMATION ROLES` lists the roles and how each works, in words.
 `FORMATION name ROLE guard` gives a member a role and puts it in the role's
@@ -392,8 +392,9 @@ it, masks can test it (`-TATTOOS +ROLE_GUARD`), and a group of NPCs can have
 roles too: give its members the tattoo (`MPTATTOO`, or the mob's tattoos).
 
 Each round of a fight, before its attacks, a member with a role reacts and
-picks its foe: an interception or a fall back is shown to the room; a change of
-foe is quiet. A guard that has just drawn an attacker fights that attacker.
+picks its foe: an interception, a fall back or a return is shown to the room; a
+change of foe is quiet, but `COMBATDEBUG` explains each choice ("role Archer:
+turns on the goblin from the ogre (the most wounded foe, 40% hit points)"). A guard that has just drawn an attacker fights that attacker.
 `WORLD CHECK` names an unknown `TARGET`, a `GUARDS` that names no role, and a
 `ROW`, `INTERCEPT` or `FALLBACK` that is no number.
 

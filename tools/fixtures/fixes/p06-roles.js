@@ -51,8 +51,12 @@ try {
 	var x = body("Fixp06brute", 100), y = body("Fixp06runt", 100);
 	hurt(y, 40);
 	x.setVictim(L); y.setVictim(L); L.setVictim(x); g.setVictim(x); a.setVictim(x); sh.setVictim(x);
-	// the archer turns on the weakest foe; again, nothing changes
+	// the archer turns on the weakest foe, and COMBATDEBUG says why; again, nothing changes
+	CM.core.CombatDebug.watch(L, a); said();
 	var did = s(FR.round(a));
+	var dbg = said();
+	CM.core.CombatDebug.unwatch(a);
+	check("debug", dbg.indexOf("role Archer: turns on Fixp06runt from Fixp06brute (the most wounded foe, 40% hit points)") >= 0, dbg);
 	check("weakest", a.getVictim() == y && did.indexOf("turned on Fixp06runt") >= 0 && s(FR.round(a)) == "", did);
 	// the guard, its leader unhurt, fights an attacker of the leader and draws no one
 	FR.round(g);
@@ -75,6 +79,14 @@ try {
 	check("fallback", L.fetchFollowerOrder(a) == 4 && out.indexOf("<S-NAME> fall(s) back.") >= 0, did + " / row " + L.fetchFollowerOrder(a));
 	FR.round(a);
 	check("fallback-once", L.fetchFollowerOrder(a) == 4, "row " + L.fetchFollowerOrder(a));
+	// healed again, it returns to its row; falling back again, the fight's end returns it
+	hurt(a, 100); FR.round(a);
+	check("returns", L.fetchFollowerOrder(a) == 2 && a.findTattoo("ROLEBACK") == null, "row " + L.fetchFollowerOrder(a));
+	hurt(a, 20); FR.round(a);
+	var fell = L.fetchFollowerOrder(a);
+	a.setVictim(null);
+	check("returns-after-fight", fell == 4 && L.fetchFollowerOrder(a) == 2 && a.findTattoo("ROLEBACK") == null, "fell to " + fell + ", now " + L.fetchFollowerOrder(a));
+	a.setVictim(x);
 	// the combat round itself runs the role: the archer, on the brute again, turns on the weakest before it attacks
 	hurt(y, 30); hurt(a, 100); y.setVictim(L); a.setVictim(x); a.setActions(0);
 	CMLib.combat().tickCombat(a);

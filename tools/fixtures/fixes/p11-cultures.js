@@ -14,8 +14,8 @@ function list() { var L = new java.util.ArrayList(); for (var i = 0; i < argumen
 function write(path, text) { Files.write(new java.io.File(root, path).toPath(), new java.lang.String(text).getBytes("UTF-8")); }
 var made = [];
 try {
-	write("cultures.ini", "[RIVERFOLK]\nNAME=River folk\nDESCRIPTION=Boat people of the delta.\nABILITIES=Fishing 40, Elvish 75, Skill_Swim 60\nTATTOOS=RIVERMARK\nKEEP=Elvish\nADOPT=COMMAND\n"
-		+ "[HILLCLAN]\nNAME=Hill clan\nMASK=-RACES +Dwarf\nABILITIES=Dwarven 50\nADOPT=COMMAND\n"
+	write("cultures.ini", "[RIVERFOLK]\nNAME=River folk\nDESCRIPTION=Boat people of the delta.\nABILITIES=Fishing 40, Elvish 75, Skill_Swim 60\nTATTOOS=RIVERMARK\nKEEP=Elvish\nADOPT=COMMAND\nSPEAKS=Elvish\nCREATION=YES\n"
+		+ "[HILLCLAN]\nNAME=Hill clan\nMASK=-RACES +Dwarf\nABILITIES=Dwarven 50\nADOPT=COMMAND\nCREATION=YES\n"
 		+ "[CLOISTER]\nNAME=The cloister\nABILITIES=Skill_Climb 30\nLEAVE=NEVER\n"
 		+ "[BROKEN]\nABILITIES=NoSuchAbilityAtAll\n");
 	write("origins.ini", "[DELTA]\nNAME=Delta-born\nCULTURE=RIVERFOLK\n[LOST]\nNAME=Lost\nCULTURE=NOSUCH\n");
@@ -37,6 +37,8 @@ try {
 	check("origin", s(CU.current(P).id) == "RIVERFOLK" && P.fetchAbility("Fishing") != null && P.fetchAbility("Fishing").proficiency() == 40 && P.fetchAbility("Elvish") != null
 		&& P.findTattoo("RIVERMARK") != null && P.findTattoo("CULTURE_RIVERFOLK") != null, "culture " + CU.current(P));
 	check("theirs-already", P.fetchAbility("Skill_Swim").proficiency() == 70 && s(CU.gave(P)).indexOf("Swim") < 0, s(CU.gave(P)));
+	var spoken = CMLib.utensils().getLanguageSpoken(P);
+	check("speaks", spoken != null && s(spoken.ID()) == "Elvish", "speaking " + (spoken == null ? "nothing" : spoken.ID()));
 	var mine = cmd("");
 	check("shown", mine.indexOf("You are of River folk. Boat people of the delta.") >= 0 && /From it: .*Fishing/.test(mine) && mine.indexOf("but Elvish") >= 0, mine);
 	var all = cmd("LIST");
@@ -53,11 +55,13 @@ try {
 	out = cmd("ADOPT riverfolk");
 	check("again", out.indexOf("You are now of River folk. It gives you: Fishing.") >= 0 && s(CU.gave(P)).indexOf("Elvish") < 0, out);
 
-	// a script: MPCULTURE leaves the one held first, under its rules
+	// a script: MPCULTURE leaves the one held first, under its rules; what was trained past the culture's gift stays
+	P.fetchAbility("Fishing").setProficiency(70);
 	var clerk = scriptedMob("Fixp11clerk", "RAND_PROG 100\nMPCULTURE Fixp11Pip ADOPT CLOISTER\n~\n"); made.push(clerk);
 	said(); tickMob(clerk); clerk.destroy();
 	out = said();
-	check("script-adopt", s(CU.current(P).id) == "CLOISTER" && P.fetchAbility("Fishing") == null && P.fetchAbility("Skill_Climb") != null && out.indexOf("You leave River folk.") >= 0, out);
+	check("script-adopt", s(CU.current(P).id) == "CLOISTER" && P.fetchAbility("Fishing") != null && P.fetchAbility("Fishing").proficiency() == 70
+		&& P.fetchAbility("Skill_Climb") != null && out.indexOf("You leave River folk.") >= 0 && out.indexOf("You keep: Fishing (trained past what it gave)") >= 0, out);
 	// LEAVE=NEVER: no leaving, no other culture, by command; a script's FORCE leaves it
 	out = cmd("LEAVE");
 	var other = cmd("ADOPT riverfolk");
@@ -70,6 +74,29 @@ try {
 	var hist = SR.read(P).get("cultures").get("history");
 	var kinds = []; for (var i = 0; i < hist.length; i++) kinds.push(s(hist[i].get("culture")) + " " + s(hist[i].get("what")) + " " + s(hist[i].get("how")));
 	check("history", kinds.join(", ") == "RIVERFOLK adopted origin, RIVERFOLK left command, RIVERFOLK adopted command, RIVERFOLK left script, CLOISTER adopted script, CLOISTER left force", kinds.join(", "));
+	// the CULTURE step of character creation: the cultures offered at creation that are theirs to take; taken up when creation ends
+	var hero = CMClass.getMOB("StdMOB"); hero.setName("Fixp11hero"); hero.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
+	hero.baseCharStats().setMyRace(CMClass.getRace("Human")); hero.recoverCharStats(); hero.bringToLife(M.location(), true); made.push(hero);
+	var HS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } }); HS.initialize(null, "MEMORY"); hero.setSession(HS); HS.setMob(hero);
+	var hseen = 0;
+	function heard() { var all = s(field(HS, "bout")); var o = all.substring(hseen); hseen = all.length; return o.replace(/\s+/g, " "); }
+	var CC = CMLib.login(), LSI = null;
+	CC.getClass().getDeclaredClasses().forEach(function (c) { if (s(c.getSimpleName()) == "LoginSessionImpl") LSI = c; });
+	var ctor = null; LSI.getDeclaredConstructors().forEach(function (k) { if (k.getParameterCount() == 1) ctor = k; }); ctor.setAccessible(true);
+	var lo = ctor.newInstance(CC);
+	function lset(name, v) { var f = LSI.getDeclaredField(name); f.setAccessible(true); f.set(lo, v); }
+	function lget(name) { var f = LSI.getDeclaredField(name); f.setAccessible(true); return f.get(lo); }
+	function step(name) { var ms = CC.getClass().getDeclaredMethods(); for (var i = 0; i < ms.length; i++) if (s(ms[i].getName()) == name) { ms[i].setAccessible(true); return ms[i].invoke(CC, lo, HS); } throw "no " + name; }
+	lset("mob", hero);
+	heard();
+	var r1 = step("charcrCultureStart"), menu = heard();
+	check("creation-menu", s(r1) == "INPUT_REQUIRED" && s(lget("state")) == "CHARCR_CULTUREPICKED" && menu.indexOf("River folk") >= 0 && menu.indexOf("Hill clan") < 0
+		&& menu.indexOf("The cloister") < 0, menu);
+	lset("lastInput", "1"); step("charcrCulturePicked");
+	check("creation-picked", s(lget("state")) == "CHARCR_FACTIONNEXT" && s(CU.picked(hero).id) == "RIVERFOLK" && CU.current(hero) == null, s(lget("state")));
+	CU.applyPick(hero);
+	check("creation-applied", s(CU.current(hero).id) == "RIVERFOLK" && CU.picked(hero) == null && hero.fetchAbility("Fishing") != null
+		&& s(SR.read(hero).get("cultures").get("history")[0].get("how")) == "creation", s(CU.current(hero)));
 	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
 	// LEDGER: each taking up and leaving, the culture held, the last refusal
 	var led = s(CM.core.Ledgers.character(P)), ev = evs(P);

@@ -921,31 +921,44 @@ public class StdMOB implements MOB
 	}
 
 	@SuppressWarnings("unchecked")
-	/** P03: the class last seen, to check memberships again when it changes */
+	/** P03, P15: the class, race and level last seen, to check memberships and talents again when they change */
 	protected String affiliationClass = null;
 	protected boolean affiliationCheck = false;
+	protected int affiliationTicks = 0;
 
 	@Override
 	public void recoverCharStats()
 	{
 		recoverCharStatsOnly();
 		final CharClass cc = baseCharStats.getCurrentClass();
-		final String now = (cc == null) ? "" : cc.ID();
+		final Race rc = baseCharStats.getMyRace();
+		final String now = ((cc == null) ? "" : cc.ID()) + "|" + ((rc == null) ? "" : rc.ID()) + "|" + basePhyStats().level();
 		if(affiliationClass == null)
 			affiliationClass = now;
 		else
 		if(!affiliationClass.equals(now) && !affiliationCheck)
 		{
 			affiliationClass = now;
-			affiliationCheck = true;
-			try
-			{
-				Affiliations.recheck(this);
-			}
-			finally
-			{
-				affiliationCheck = false;
-			}
+			characterRules();
+		}
+	}
+
+	/** P03, P15: memberships' KEEP masks and undecided talents, checked again */
+	protected void characterRules()
+	{
+		// only for those the rules are about: players, their followers, and members of organizations
+		if(affiliationCheck || ((playerStats() == null) && (amFollowing() == null) && !clans().iterator().hasNext()))
+			return;
+		affiliationCheck = true;
+		try
+		{
+			Affiliations.recheck(this);
+			for(final String told : Talents.recheck(this))
+				tell(told);
+		}
+		finally
+		{
+			affiliationCheck = false;
 		}
 	}
 
@@ -1690,6 +1703,9 @@ public class StdMOB implements MOB
 		// A20: pools that reset when a fight ends
 		if(fightEnds && NamedResources.enabled())
 			NamedResources.combatEnded(this);
+		// P06: a member that fell back takes its row again
+		if(fightEnds)
+			FormationRoles.fightEnded(this);
 		recoverPhyStats();
 		recoverCharStats();
 		recoverMaxState();
@@ -4358,6 +4374,12 @@ public class StdMOB implements MOB
 					}
 					if(!isMonster)
 						CMLib.combat().expendEnergy(this, false);
+					// P03, P15: what a mask can test changes in many ways (factions, tattoos, time); look again every 75 ticks of play
+					if((!isMonster) && ((++affiliationTicks) >= 75))
+					{
+						affiliationTicks = 0;
+						characterRules();
+					}
 
 					if(isInCombat())
 					{
