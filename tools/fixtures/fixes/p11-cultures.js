@@ -74,6 +74,18 @@ try {
 	var hist = SR.read(P).get("cultures").get("history");
 	var kinds = []; for (var i = 0; i < hist.length; i++) kinds.push(s(hist[i].get("culture")) + " " + s(hist[i].get("what")) + " " + s(hist[i].get("how")));
 	check("history", kinds.join(", ") == "RIVERFOLK adopted origin, RIVERFOLK left command, RIVERFOLK adopted command, RIVERFOLK left script, CLOISTER adopted script, CLOISTER left force", kinds.join(", "));
+	// a culture the world's file no longer has: shown as such, and left by what was recorded
+	CU.adopt(P, "RIVERFOLK", "script");
+	var gaveNow = s(CU.gave(P));
+	write("cultures.ini", "[HILLCLAN]\nNAME=Hill clan\nMASK=-RACES +Dwarf\nABILITIES=Dwarven 50\n");
+	var shownGone = cmd("");
+	var leftGone = cmd("LEAVE");
+	check("orphan", shownGone.indexOf("You are of RIVERFOLK, which this world no longer has") >= 0 && leftGone.indexOf("You leave RIVERFOLK") >= 0
+		&& P.findTattoo("CULTURE_RIVERFOLK") == null && s(CU.heldId(P)) == "", gaveNow + " / " + shownGone + " / " + leftGone);
+	write("cultures.ini", "[RIVERFOLK]\nNAME=River folk\nDESCRIPTION=Boat people of the delta.\nABILITIES=Fishing 40, Elvish 75, Skill_Swim 60\nTATTOOS=RIVERMARK\nKEEP=Elvish\nADOPT=COMMAND\nSPEAKS=Elvish\nCREATION=YES\n"
+		+ "[HILLCLAN]\nNAME=Hill clan\nMASK=-RACES +Dwarf\nABILITIES=Dwarven 50\nADOPT=COMMAND\nCREATION=YES\n"
+		+ "[CLOISTER]\nNAME=The cloister\nABILITIES=Skill_Climb 30\nLEAVE=NEVER\n");
+
 	// the CULTURE step of character creation: the cultures offered at creation that are theirs to take; taken up when creation ends
 	var hero = CMClass.getMOB("StdMOB"); hero.setName("Fixp11hero"); hero.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
 	hero.baseCharStats().setMyRace(CMClass.getRace("Human")); hero.recoverCharStats(); hero.bringToLife(M.location(), true); made.push(hero);

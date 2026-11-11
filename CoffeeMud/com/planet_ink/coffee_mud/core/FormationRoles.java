@@ -99,6 +99,20 @@ public final class FormationRoles
 		return null;
 	}
 
+	/** the role a member's tattoo names, even one formations.ini no longer has; "" for none */
+	public static String named(final MOB M)
+	{
+		if(M == null)
+			return "";
+		for(final Enumeration<Tattoo> t = M.tattoos(); t.hasMoreElements();)
+		{
+			final Tattoo T = t.nextElement();
+			if((T != null) && T.name().startsWith(PREFIX))
+				return T.name().substring(PREFIX.length());
+		}
+		return "";
+	}
+
 	/** a member's role, or null; quick for those with none */
 	public static Origin of(final MOB M)
 	{

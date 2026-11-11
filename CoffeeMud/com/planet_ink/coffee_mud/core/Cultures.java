@@ -161,7 +161,7 @@ public final class Cultures
 			throw new IOException(why);
 		}
 		final StringBuilder said = new StringBuilder();
-		if(current(M) != null)
+		if((current(M) != null) || !heldId(M).isEmpty())
 			said.append(leave(M, how)).append(' ');
 		final List<String> gave = new ArrayList<String>(), tattoos = new ArrayList<String>(), names = new ArrayList<String>();
 		final MiniJSON.JSONObject profs = new MiniJSON.JSONObject();
@@ -240,9 +240,18 @@ public final class Cultures
 	 * the tattoos it gave; refused for LEAVE=NEVER, but by "force".
 	 * @return what happened, in words
 	 */
+	/** the culture a character's records say they hold, even one the file no longer has; "" for none */
+	public static String heldId(final MOB M)
+	{
+		return String.valueOf(StoryRecords.object(StoryRecords.read(M), RECORD).get("current") == null ? "" : StoryRecords.object(StoryRecords.read(M), RECORD).get("current"));
+	}
+
 	public static String leave(final MOB M, final String how) throws IOException
 	{
-		final Origin C = current(M);
+		Origin C = current(M);
+		final String held = heldId(M);
+		if((C == null) && !held.isEmpty())
+			C = new Origin(held); // a culture the file no longer has: left by what was recorded
 		if(C == null)
 			throw new IOException(CMLib.lang().L("you hold no culture"));
 		if(C.get("LEAVE").equalsIgnoreCase("NEVER") && !"force".equalsIgnoreCase(how))
@@ -383,7 +392,13 @@ public final class Cultures
 		if(!all)
 		{
 			if(C == null)
+			{
+				final String held = heldId(M);
+				if(!held.isEmpty())
+					return CMLib.lang().L("You are of @x1, which this world no longer has.  From it: @x2.  CULTURE LEAVE takes that away.",
+						held, gave(M).isEmpty() ? CMLib.lang().L("nothing") : String.join(", ", gave(M)));
 				return CMLib.lang().L("You hold no culture.  CULTURE LIST names the cultures of this world.");
+			}
 			s.append(CMLib.lang().L("You are of @x1.", C.name()));
 			if(C.get("DESCRIPTION").length() > 0)
 				s.append(' ').append(C.get("DESCRIPTION"));

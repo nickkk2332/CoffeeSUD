@@ -787,6 +787,12 @@ public final class SaveGame
 			for(final String note : areaNotes)
 				noteWorldChange(note);
 		}
+		// phase 2's rules files: each that changed, and what that means for this campaign
+		final List<String> rules = RulesFiles.changes(header.getProperty("rulesums", ""));
+		if(!rules.isEmpty() && ((savedSum.length() == 0) || savedSum.equals(WorldFiles.bootChecksum())))
+			noteWorldChange(text("The world has changed since this game was saved."));
+		for(final String note : rules)
+			noteWorldChange(note);
 		if(fresh != null)
 		{
 			if(fresh.equalsIgnoreCase("ALL"))
@@ -1101,6 +1107,7 @@ public final class SaveGame
 		for(final Map.Entry<String, String> e : WorldFiles.loadedAreaSums().entrySet())
 			areaSums.append((areaSums.length() > 0) ? ";" : "").append(e.getKey()).append('=').append(e.getValue());
 		header.setProperty("areasums", areaSums.toString());
+		header.setProperty("rulesums", RulesFiles.saved()); // phase 2's rules files, for the restore report
 		header.setProperty("paused", Boolean.toString(GameTime.isPaused()));
 		header.setProperty("partymeet", Boolean.toString(Party.isMeetWhereLeft()));
 		header.setProperty("partyfight", Boolean.toString(Party.isFightEachOther()));

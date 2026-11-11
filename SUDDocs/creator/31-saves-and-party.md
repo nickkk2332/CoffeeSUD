@@ -1140,6 +1140,29 @@ kind of room this game does not have (Y).` and `Quest X is gone from the world.`
 most 60 lines are kept. A separate block, `The save's optional modules:`, reports
 what the restore did with the save's module state; `FRESH=` does not affect it.
 
+### Rules files
+
+The rules files of the character and organization features are read as they
+are now, every time: a save keeps what each feature recorded (a culture and what
+it gave, a talent decided, a role's name, a pool's units, a personal record),
+not the rules. A save also keeps each rules file's sum, and the restore report
+names each that changed since, with what that means:
+
+| File | After a change |
+| --- | --- |
+| `cultures.ini` | Cultures already taken up keep what they gave; leaving one takes away what was recorded. A culture the file no longer has is still shown by `CULTURE` ("which this world no longer has") and can be left. |
+| `talents.ini` | Talents already decided stay decided; the others are checked against the file as it is now. |
+| `formations.ini` | Members keep their roles by name; a role the file no longer has does nothing until it is given again (`FORMATION` shows it as one the world no longer has). |
+| `orgpools.ini` | Pools keep their units; a kind the file no longer has keeps them, unseen, until it is back. |
+| `challenges.ini` | Personal records are kept; a book the file no longer has is not shown. |
+| `affiliations.ini` | The rules as they are now apply from now on; a new `CONFLICT` does not end memberships already held, it refuses the next join. A `KEEP` is checked again on the next class, race or level change, or within 75 ticks of play. |
+
+```text
+This save was made with another version of the world:
+  The world has changed since this game was saved.
+  Changed rules file: cultures.ini (cultures already taken up keep what they gave; ...).
+```
+
 ### A checklist for shipping a patch to a world with existing saves
 
 1. Keep a save made before the change (`SAVES COPY hero hero-before-patch`); a
