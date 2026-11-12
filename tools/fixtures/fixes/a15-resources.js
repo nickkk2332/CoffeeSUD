@@ -18,7 +18,7 @@ function costs(map) { var m = new java.util.TreeMap(); for (var k in map) m.put(
 var room = scratchRoom(), actors = [];
 function actor(name) { var m = newMob("GenMob", room); m.setName(name); m.baseState().setMana(1000); m.recoverMaxState(); m.resetToMaxState(); actors.push(m); return m; }
 try {
-	var example = new java.io.File("../docs/creator/examples");
+	var example = new java.io.File("../SUDDocs/creator/examples");
 	var mods = new java.io.File(folder, "modules"); mods.mkdirs();
 	var pools = new java.io.File(folder, "pools"); pools.mkdirs();
 	var defs = new java.io.File(folder, "compositions"); defs.mkdirs();

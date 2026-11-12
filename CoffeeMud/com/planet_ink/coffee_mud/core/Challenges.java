@@ -116,11 +116,6 @@ public final class Challenges
 		final List<String> out = new ArrayList<String>();
 		for(final Book b : books().values())
 		{
-			for(final String t : b.named)
-			{
-				if(CMLib.achievements().getAchievement(t) == null)
-					out.add("challenges.ini: " + b.id + ": no achievement " + t);
-			}
 			if(b.entries().isEmpty())
 				out.add("challenges.ini: " + b.id + ": the book has no entries");
 		}
@@ -267,7 +262,31 @@ public final class Challenges
 		all.put("records", records);
 		StoryRecords.write(who, all);
 		if(said.length() > 0)
+		{
 			ModuleStats.count(FAMILY, b.id.toLowerCase(Locale.ROOT), said.equals("first") ? "first records" : "new bests");
+			Provenance.event(who, FAMILY, "challenges.ini " + b.id, (said.equals("first") ? "a first record of " : "a new best at ") + key + ": " + value);
+		}
 		return said;
+	}
+
+	/** renames.ini: a character's personal records filed under the book's name now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
+	{
+		final List<String> did = new ArrayList<String>();
+		final MiniJSON.JSONObject all = StoryRecords.read(M);
+		if(!(all.get("records") instanceof MiniJSON.JSONObject))
+			return did;
+		final MiniJSON.JSONObject records = (MiniJSON.JSONObject)all.get("records");
+		for(final String k : new ArrayList<String>(records.keySet()))
+		{
+			final String now = renames.get(k.toUpperCase(Locale.ROOT));
+			if((now == null) || records.containsKey(now))
+				continue;
+			records.put(now, records.remove(k));
+			did.add("records of " + k + " are filed under " + now + " now");
+		}
+		if(!did.isEmpty())
+			StoryRecords.write(M, all);
+		return did;
 	}
 }

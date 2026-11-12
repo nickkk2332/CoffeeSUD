@@ -88,6 +88,18 @@ P02) are deferred; the other entries are built, merged or taught as recipes:
 | P13 | Built (extension) | `challenges.ini`, `CHALLENGES`, `MPRECORD` | [Ch. 27](../../creator/27-mobprog-commands.md#mprecord), [Cookbook](../../creator/cookbook.md) | p13-challenges.js |
 | P15 | Built (extension) | `talents.ini`, `TALENTS` | [Ch. 11](../../creator/11-presentation-language.md) | p15-talents.js |
 
+Phase 2 is joined to the shared tools as phase 1 is. `WORLD CHECK ONLY=REFS`
+follows the names in each phase 2 rules file and service record, and `LEDGER`
+shows their events and refusals ([Ch. 41](../../creator/41-inspection-and-limits.md#ledgers)).
+A save keeps pools, held service payments, cultures, formation roles, talents,
+challenge records and affiliations, and `RESTORE` names any rules file that
+changed since the save; `world/renames.ini` carries a renamed entry over to
+whoever holds it, and `WORLD MODULES RULES` lists the files
+([Ch. 31](../../creator/31-saves-and-party.md#rules-files)). The played test is
+`tools/fixes.sh saves5`. `tools/simulate.py` takes elite
+traits, a boss's own actions, allies with roles and formations
+([Ch. 41](../../creator/41-inspection-and-limits.md#a-boss-that-fights-back)).
+
 The support build of Q10 is the [ability-composition pack](../../creator/examples/ability-composition/README.md)
 played in the [Ember Trial](../../creator/examples/ember-trial/README.md). Tests run
 from `tools/fixes.sh` (the `.js` fixtures) and `tools/check.sh`.

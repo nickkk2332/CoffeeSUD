@@ -169,17 +169,18 @@ public final class ItemCrafting
 				names.add(c.name+" ("+c.id+": "+c.number("units")+" "+c.string("material")+")");
 			return String.join(" and ",out)+(names.isEmpty()?"":", with the catalyst(s) "+String.join(", ",names));
 		}
-		String describe()
+		/** the plan in words, its item named as the viewer knows it (A23) */
+		String describe(final MOB viewer)
 		{
 			if(stage>=0)
 			{
 				final JSONObject st=stageOf(op,stage);
-				return op.name+" / stage "+(stage+1)+" of "+stages(op).length+" ("+st.get("name")+") on "+item.Name()+"; cost "+cost()
+				return op.name+" / stage "+(stage+1)+" of "+stages(op).length+" ("+st.get("name")+") on "+item.name(viewer)+"; cost "+cost()
 					+" at "+op.string("station")
 					+(stage==stages(op).length-1?"; this last stage makes "+((JSONObject)op.raw.get("result")).get("catalog"):"")
 					+". No inputs spent or random outcomes drawn.";
 			}
-			return op.name+" / "+op.string("action")+" on "+item.Name()+"; cost "+cost()
+			return op.name+" / "+op.string("action")+" on "+item.name(viewer)+"; cost "+cost()
 				+" at "+op.string("station")+". No inputs spent or random outcomes drawn.";
 		}
 	}
@@ -341,10 +342,10 @@ public final class ItemCrafting
 		final JSONObject order=workOrder(piece);
 		final Definition pinned=pinnedDef(order.get("recipe"));
 		if(!pinned.id.equals(recipe.id))
-			throw new IOException(piece.Name()+" is a work piece of "+pinned.id+", not "+recipe.id);
+			throw new IOException(piece.name(who)+" is a work piece of "+pinned.id+", not "+recipe.id);
 		final int stage=((Number)order.get("stage")).intValue();
 		if(stage>=stages(pinned).length)
-			throw new IOException(piece.Name()+" has no stage left");
+			throw new IOException(piece.name(who)+" has no stage left");
 		final JSONObject st=stageOf(pinned,stage);
 		final boolean last=stage==stages(pinned).length-1;
 		if(!catalysts.isEmpty()&&!last)
@@ -418,9 +419,9 @@ public final class ItemCrafting
 			final Plan stage=planStage(who,item,op,cats);
 			final JSONObject r=(JSONObject)stage.op.raw.get("result");
 			if(stage.stage<stages(stage.op).length-1||!r.containsKey("policy")&&((Number)r.get("modifiers")).intValue()==0)
-				return stage.describe();
+				return stage.describe(who);
 			// I06: the last stage's product: what its first modifier can be
-			return stage.describe()+"\nDistribution: "+stage.bias.describe()+(stage.op.optional("catalysts").isEmpty()?""
+			return stage.describe(who)+"\nDistribution: "+stage.bias.describe()+(stage.op.optional("catalysts").isEmpty()?""
 				:"; catalysts this recipe takes: "+String.join(", ",stage.op.optional("catalysts")))+"\nThe product's first modifier:"
 				+ItemModifierRules.describe(productPick(stage.op,stage.bias))
 				+(r.containsKey("policy")?"\nIts rarity decides how many modifiers it gets; a rarity that gives none gives none.":"");
@@ -433,7 +434,7 @@ public final class ItemCrafting
 			// I06: the player's preview: each affix's chance in the first pick, or why it cannot be drawn
 			final int n=action.equals("imbue")?1:ItemModifierRules.modifiers(plan.data).size()
 				-ItemModifierRules.modifiers(ItemModifierRules.reforged(plan.data)).size();
-			return plan.describe()+"\nDistribution: "+plan.bias.describe()+(op.optional("catalysts").isEmpty()?""
+			return plan.describe(who)+"\nDistribution: "+plan.bias.describe()+(op.optional("catalysts").isEmpty()?""
 				:"; catalysts this operation takes: "+String.join(", ",op.optional("catalysts")))+"\n"
 				+(action.equals("imbue")?"The modifier drawn:":"Reforge draws "+n+" modifier(s) in place of the unprotected ones; the first:")
 				+ItemModifierRules.describe(ItemModifierRules.firstPick(plan.data,op,ItemModifiers.definitions(),item.basePhyStats().level(),plan.bias))
@@ -457,14 +458,14 @@ public final class ItemCrafting
 			final List<String> tags=new ArrayList<String>();
 			for(final Object t:ModuleDefinitions.array(q.get("tags"),"quality tags"))
 				tags.add(String.valueOf(t));
-			return plan.describe()+"\nRefines "+item.Name()+" to quality tier "+(ItemModifierRules.quality(plan.data)+1)+" of "+q.get("max")+": modifiers tagged "
+			return plan.describe(who)+"\nRefines "+item.name(who)+" to quality tier "+(ItemModifierRules.quality(plan.data)+1)+" of "+q.get("max")+": modifiers tagged "
 				+String.join(" or ",tags)+" count "+((ItemModifierRules.quality(plan.data)+1)*((Number)q.get("percent")).intValue())
 				+"% more. The rolls kept on the item do not change.";
 		}
 		if(action.equals("upgrade"))
-			return plan.describe()+"\nUpgrades to "+ItemModifierRules.successor(plan.data,ItemModifiers.definitions()).key()
+			return plan.describe(who)+"\nUpgrades to "+ItemModifierRules.successor(plan.data,ItemModifiers.definitions()).key()
 				+", keeping every modifier and its rolls.";
-		return plan.describe()+(ranges.isEmpty()?"":"\nRoll ranges: "+ranges);
+		return plan.describe(who)+(ranges.isEmpty()?"":"\nRoll ranges: "+ranges);
 	}
 	public static String operations()throws IOException
 	{
@@ -498,11 +499,16 @@ public final class ItemCrafting
 	}
 	public static String pool(final Item item)throws IOException
 	{
+		return pool(item,null);
+	}
+	/** MODCRAFT POOL: the affixes an item's base offers, the item named as the viewer knows it (A23; no viewer, its real name) */
+	public static String pool(final Item item,final MOB viewer)throws IOException
+	{
 		ItemModifiers.require();
 		final JSONObject data=ItemModifiers.data(item);
 		final Library lib=ItemModifiers.definitions();
 		final Definition base=lib.pinned(data.get("base"),"base");
-		final StringBuilder out=new StringBuilder("Affix pool for "+item.Name()
+		final StringBuilder out=new StringBuilder("Affix pool for "+((viewer==null)?item.Name():item.name(viewer))
 			+"; PREVIEW also checks the chosen operation, station and materials.\n");
 		for(final String id:base.list("pool"))
 		{
@@ -566,7 +572,7 @@ public final class ItemCrafting
 		state.put("pending",encoded);
 		save(who,state);
 		ModuleStats.count("items","crafts","prepared");
-		return "Prepared craft #"+(serial+1)+": "+plan.describe()+"\nMODCRAFT COMMIT "+(serial+1)+" settles it; MODCRAFT CANCEL "+(serial+1)
+		return "Prepared craft #"+(serial+1)+": "+plan.describe(who)+"\nMODCRAFT COMMIT "+(serial+1)+" settles it; MODCRAFT CANCEL "+(serial+1)
 			+" discards it. Preparation has no random outcome to shop around for.";
 	}
 	private static Object[] pins(final List<Definition> defs)
@@ -608,7 +614,7 @@ public final class ItemCrafting
 				final JSONObject o=workOrder(I);
 				final Definition r=pinnedDef(o.get("recipe"));
 				final int k=((Number)o.get("stage")).intValue();
-				out.append("\nWork piece ").append(I.Name()).append(": ").append(r.name).append(", ").append(k).append(" of ")
+				out.append("\nWork piece ").append(I.name(who)).append(": ").append(r.name).append(", ").append(k).append(" of ")
 					.append(stages(r).length).append(" stage(s) done");
 				if(k<stages(r).length)
 				{
@@ -619,7 +625,7 @@ public final class ItemCrafting
 			}
 			catch(final IOException x)
 			{
-				out.append("\nWork piece ").append(I.Name()).append(": ").append(x.getMessage());
+				out.append("\nWork piece ").append(I.name(who)).append(": ").append(x.getMessage());
 			}
 		}
 		return out.toString();
@@ -881,7 +887,7 @@ public final class ItemCrafting
 	{
 		final Plan plan=planStage(who,piece,recipe,cats);
 		if(!pending.get("selector").equals(plan.selector))
-			throw new IOException(piece.Name()+" is at another stage now; cancel and prepare again");
+			throw new IOException(piece.name(who)+" is at another stage now; cancel and prepare again");
 		if(!pending.get("item_hash").equals(fingerprint(piece))
 			||!ModuleDefinitions.json((JSONObject)pending.get("costs")).equals(ModuleDefinitions.json(costs(plan.costs,false))))
 			throw new IOException("work piece or material piles changed; cancel and prepare again");
@@ -1014,7 +1020,7 @@ public final class ItemCrafting
 		}
 		return "Committed craft #"+serial+": "+plan.op.name+", stage "+(plan.stage+1)+" of "+stages(plan.op).length+" ("+st.get("name")+"); consumed "
 			+plan.paid()+". "
-			+(last?result.Name()+" is finished.":piece.Name()+" waits for stage "+(plan.stage+2)+".")
+			+(last?result.name(who)+" is finished.":piece.name(who)+" waits for stage "+(plan.stage+2)+".")
 			+" Repeating this request cannot consume or apply it again.";
 	}
 	/** A recipe's finished product: its catalog item, made with its base's modifiers or by its loot policy. */

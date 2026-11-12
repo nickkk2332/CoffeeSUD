@@ -2052,7 +2052,7 @@ public class CoffeeUtensils extends StdLibrary implements CMMiscUtils
 								c+=1+wcodes.nameup(code).length();
 								final Item I=mob.fetchFirstWornItem(code);
 								if(I!=null)
-									buf.append(I.name());
+									buf.append(I.name(mob)); // A23: the prompt and a window's panel name it as its wearer knows it
 								isFound=true;
 								break;
 							}

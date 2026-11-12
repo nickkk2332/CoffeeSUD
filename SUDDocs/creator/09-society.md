@@ -502,7 +502,7 @@ LEAVE|The Night Hand|TATTOOS=NIGHTMARK ABILITIES=Thief_Hide
 | --- | --- |
 | `TAG\|org\|tag...` | An organization's tags. Its own name and its type's `CATEGORY` are tags of it too. |
 | `CONFLICT\|tag\|tag` | Two tags that cannot be held together, either way: joining an organization of one while in one of the other is refused, however the joining comes about (`CLANAPPLY`, a guildmaster, a script), so rejoining too. A promotion within one is no joining. |
-| `KEEP\|org\|mask` | What a member must keep passing. It is checked again whenever their class changes; failing it, they leave and are told why. |
+| `KEEP\|org\|mask` | What a member must keep passing. It is checked again whenever their class, race or level changes, and every 75 ticks of play (for what else a mask tests: factions, tattoos, time); failing it, they leave and are told why. |
 | `LEAVE\|org\|...` | What leaving takes away, however it comes about: `TATTOOS=` and `ABILITIES=` (their effects end too). The government's own grants by level follow membership already. |
 
 The refusal says which two cannot be held together and by which tags.
@@ -518,7 +518,11 @@ SUPPLIES=TITLE="Supplies" MAX=100 MONEY=5
 ORE=TITLE="Ore stock" MAX=500 MATERIAL=IRON
 ```
 
-`MAX` is the most a pool holds (1000 by default). A member gives to it with
+`MAX` is the most a pool holds (1000 by default). `SPENDERS="Officer,Leader"`
+limits the services a pool pays for to members of those ranks (a position's
+name or ID; every member when left out), and `TAKERS=` names the ranks that
+may take units out with `POOLS TAKE [n] [pool] (FROM [organization])`: money at
+`MONEY` a unit, or a pile of the material (no one, when left out). A member gives to it with
 `POOLS GIVE [n] [pool] (TO [organization])`: each unit costs `MONEY` in their
 currency, or a weight unit of plain `MATERIAL` from their inventory (a pile is
 partly spent and keeps the rest). A gift past `MAX`, from someone who is not a
@@ -534,9 +538,14 @@ settings (`POOLS`, `POOLLEDGER`), so they are saved with the organization.
 `WORLD CHECK` reports a kind no one can give to (neither `MONEY` nor
 `MATERIAL`) and an unknown material.
 
-From a script, the core class `OrgPools` gives the same calls: `units(org,
-pool)`, `give(member, org, pool, n)` and `spend(org, pool, n, forWhom, what)`,
-which returns the receipt number.
+Scripts add to and spend from a pool, each with a receipt in its ledger:
+`MPPOOL "The Order" ADD SUPPLIES 5 a merchant's gift` and
+`MPPOOL "The Order" SPEND SUPPLIES 2 a feast` (refused, spending nothing, when
+it holds too little). `$%POOL(The Order SUPPLIES)%` is what a pool holds, and
+`IF POOL(The Order SUPPLIES >= 5)` tests it. JavaScript has
+`cm.poolUnits(org, pool)`, `cm.poolAdd(org, pool, n, what)` and
+`cm.poolSpend(org, pool, n, what)`. A character's gifts, takings and the pool
+spends made for them are in their `LEDGER`.
 Test: [p08-pools.js](../../tools/fixtures/fixes/p08-pools.js).
 
 ### Party-founded clans

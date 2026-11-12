@@ -165,6 +165,9 @@ public class CMLister extends StdLibrary implements ListingLibrary
 			}
 		}
 		else
+		if(item instanceof Physical)
+			seen = CMStrings.capitalizeFirstLetter(((Physical)item).name(viewerM))+(sysmsgs?" ^H("+CMClass.classID(item)+")^N":""); // A23
+		else
 			seen = CMStrings.capitalizeFirstLetter(item.name())+(sysmsgs?" ^H("+CMClass.classID(item)+")^N":"");
 		return seen;
 	}
@@ -301,8 +304,8 @@ public class CMLister extends StdLibrary implements ListingLibrary
 
 				if(tag!=null)
 				{
-					if(nameTagParm)
-						say.append("^<"+tag+CMStrings.replaceAll(tagParm,"*",CMStrings.removeColors(item.name()))+"^>");
+					if(nameTagParm) // A23: the name the viewer knows it by, which finds it too
+						say.append("^<"+tag+CMStrings.replaceAll(tagParm,"*",CMStrings.removeColors((item instanceof Physical)?((Physical)item).name(viewerM):item.name()))+"^>");
 					else
 						say.append("^<"+tag+tagParm+"^>");
 				}

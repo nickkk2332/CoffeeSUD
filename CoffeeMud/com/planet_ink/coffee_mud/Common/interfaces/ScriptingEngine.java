@@ -799,7 +799,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"EXPTONEXT", //224 P2
 		"CLANPOS", "CLANMEMBER", "CLANS", "CLANRELATION", "AREACLAN", "AREACONTROL", "REVOLTCHANCE",
 		"ABOARD", "RIDERS", "ISANCHORED", "ISDOCKED", "COURSE", "VESSELROOM", "RIDING", "SPEED", "HULL",
-        "UNDERSTANDS", "UNDERSTANDS$"
+        "UNDERSTANDS", "UNDERSTANDS$",
+		"POOL", // P08
 	};
 
 	/** String list of all valid mobprog commands */
@@ -963,6 +964,8 @@ public interface ScriptingEngine extends CMCommon, Tickable, MsgListener
 		"MPDIRECTOR", // G06
 		"MPRECORD", // P13
 		"MPCULTURE", // P11
+		"MPSERVICE", // P04
+		"MPPOOL", // P08
 	};
 
 	/**

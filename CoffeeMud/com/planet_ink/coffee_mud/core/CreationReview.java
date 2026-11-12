@@ -235,6 +235,9 @@ public class CreationReview
 		if(C.getWorshipCharID().length() > 0)
 			s.append("^HDeity^N: ").append(C.getWorshipCharID()).append("\n\r");
 		Room start = mob.getStartRoom();
+		final Origins.Origin culture = Cultures.picked(mob);
+		if(culture != null)
+			s.append("^HCulture^N: ").append(culture.name()).append("\n\r");
 		final Origins.Origin O = Origins.chosen(mob);
 		if(O != null)
 		{

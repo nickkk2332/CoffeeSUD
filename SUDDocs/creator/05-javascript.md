@@ -417,6 +417,11 @@ variables, like `@` in MOBPROG). A Room is named by its extended ID.
 | Member | Effect |
 | --- | --- |
 | `cm.command(name[, opts], fn)` | New game command; returns its ID (`JS` + upper-case name). |
+| `cm.serviceDone(npc, who, service)` | Keeps `who`'s held payment for a `"pay": "done"` service of `npc`, as `MPSERVICE who DONE`. Throws when there is none. |
+| `cm.serviceRefund(npc, who, service)` | Gives back `who`'s latest payment for the service, held or kept, once. Throws when there is none. |
+| `cm.poolUnits(org, pool)` | The units in an organization's shared pool. |
+| `cm.poolAdd(org, pool, n, what)` | Adds units, paid by no one; refused past the pool's `MAX`. Returns the receipt number. |
+| `cm.poolSpend(org, pool, n, what)` | Spends units; refused, spending nothing, when the pool holds too little. Returns the receipt number. |
 | `cm.adoptCulture(mob, culture, force)` | Takes up a culture of `world/cultures.ini`, by the same rules as `MPCULTURE`; returns what changed, in words. Throws when refused. |
 | `cm.leaveCulture(mob, force)` | Leaves the character's culture: what it gave goes, but its `KEEP`. Throws when refused (`LEAVE=NEVER` without `force`). |
 | `cm.record(mob, book, record, value, lower)` | A personal record in a challenge book: the first value and the best (lowest when `lower`), kept; returns `"first"`, `"best"` or `""`. |

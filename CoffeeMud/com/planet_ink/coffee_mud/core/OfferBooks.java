@@ -252,7 +252,18 @@ public final class OfferBooks
 		return read(prop);
 	}
 
-	/** OFFERS: the book here */
+	/**
+	 * A23: an offer's item as the viewer knows it: its catalog item's name, or
+	 * the unknown name of a kind they have not learned.
+	 */
+	private static String seen(final MOB viewer, final Object name)
+	{
+		final String real = String.valueOf(name);
+		final Item proto = CMLib.catalog().getCatalogItem(real);
+		return (proto == null) ? real : ItemKnowledge.name(viewer, proto, real);
+	}
+
+	/** OFFERS: the book here, each offer named as the reader knows it */
 	public static String show(final MOB mob) throws IOException
 	{
 		final Physical S = here(mob);
@@ -264,7 +275,7 @@ public final class OfferBooks
 		for(int i = 0; i < offers.size(); i++)
 		{
 			final JSONObject o = offers.get(i);
-			s.append("\n  ").append(i + 1).append(") ").append(o.get("name")).append(" - ").append(money(S, ((Number)o.get("price")).doubleValue()))
+			s.append("\n  ").append(i + 1).append(") ").append(seen(mob, o.get("name"))).append(" - ").append(money(S, ((Number)o.get("price")).doubleValue()))
 				.append(Boolean.TRUE.equals(o.get("held")) ? " [held for you]" : "");
 		}
 		final long left = QuestBoards.refreshMs("REFRESH=\"" + b.refresh + "\"", mob) - (GameTime.now() - b.drawn());
@@ -293,7 +304,8 @@ public final class OfferBooks
 		for(final JSONObject o : offers)
 			o.put("held", Boolean.valueOf(o == chosen));
 		store(S.fetchEffect(PROPERTY), b, offers, b.drawn());
-		return S.Name() + " holds " + chosen.get("name") + " for you. It stays through rerolls and refreshes until you buy it or OFFERS RELEASE it.";
+		Provenance.event(mob, FAMILY, S.Name(), "held the offer of " + chosen.get("name"));
+		return S.Name() + " holds " + seen(mob, chosen.get("name")) + " for you. It stays through rerolls and refreshes until you buy it or OFFERS RELEASE it.";
 	}
 
 	/** OFFERS RELEASE: lets the held offer go back to the book */
@@ -307,7 +319,7 @@ public final class OfferBooks
 			throw new IOException("you hold no offer here");
 		held.put("held", Boolean.FALSE);
 		store(S.fetchEffect(PROPERTY), b, offers, b.drawn());
-		return "You let " + held.get("name") + " go back to the book.";
+		return "You let " + seen(mob, held.get("name")) + " go back to the book.";
 	}
 
 	private static void pay(final MOB mob, final Physical seller, final double amount) throws IOException
@@ -342,9 +354,10 @@ public final class OfferBooks
 		}
 		settle(c, start);
 		ModuleStats.count(FAMILY, S.Name(), "rerolls");
+		Provenance.event(mob, FAMILY, S.Name(), "paid " + money(S, b.reroll) + " to draw the offer book again");
 		final StringBuilder s = new StringBuilder("You pay ").append(money(S, b.reroll)).append(" and ").append(S.Name()).append(" draws the book again:");
 		for(int i = 0; i < offers.size(); i++)
-			s.append("\n  ").append(i + 1).append(") ").append(offers.get(i).get("name")).append(" - ").append(money(S, ((Number)offers.get(i).get("price")).doubleValue()))
+			s.append("\n  ").append(i + 1).append(") ").append(seen(mob, offers.get(i).get("name"))).append(" - ").append(money(S, ((Number)offers.get(i).get("price")).doubleValue()))
 				.append(Boolean.TRUE.equals(offers.get(i).get("held")) ? " [held for you]" : "");
 		return s.toString();
 	}
@@ -379,7 +392,9 @@ public final class OfferBooks
 		}
 		mob.addItem(made);
 		ModuleStats.count(FAMILY, S.Name(), "sales");
-		return "You buy " + made.Name() + " from " + S.Name() + " for " + money(S, price) + ".";
+		Provenance.event(mob, FAMILY, S.Name(), "bought " + made.Name() + " for " + money(S, price));
+		Provenance.event(made, FAMILY, S.Name(), "bought by " + mob.Name() + " for " + money(S, price));
+		return "You buy " + made.name(mob) + " from " + S.Name() + " for " + money(S, price) + ".";
 	}
 
 	/** what the property says of itself, and WORLD CHECK: why its text is wrong, or "" */

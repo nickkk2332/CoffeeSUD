@@ -772,8 +772,10 @@ SEER=TITLE="Second sight" LORE="HERBS_2" CHANCE=50
 | `TATTOO` | A tattoo it gives, for masks and scripts. |
 | `MESSAGE` | What the character is told when it awakens. |
 
-Whenever a character learns lore or makes a discovery, and when they come
-into the game, their talents not yet decided are checked again. One whose
+Whenever a character learns lore or makes a discovery, when they come into
+the game, when their class, race or level changes, and every 75 ticks of play
+(for what else a talent's `MASK` tests), their talents not yet decided are
+checked again. One whose
 needs are met is decided at once and for good: with a chance below 100, by one
 draw from the campaign's `talents` stream. It awakens or stays dormant, and
 either is a tattoo (`TALENT_[ID]` or `TALENT_[ID]_DORMANT`), so reading the

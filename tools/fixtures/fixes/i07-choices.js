@@ -28,7 +28,7 @@ function prefixCharm(a) { for (var k = 0; k < 40; k++) { var I = charm(a); var d
 function carriedNamed(a, part) { for (var i = 0; i < a.numItems(); i++) if (s(a.getItem(i).Name()).indexOf(part) >= 0) return a.getItem(i); return null; }
 var RM = CM.Items.interfaces.RawMaterial;
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "ability-composition/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/combat"), new java.io.File(root, "combat"));

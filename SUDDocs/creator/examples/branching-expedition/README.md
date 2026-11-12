@@ -29,7 +29,7 @@ and `rewards.escrow` in `MODULES`.
 ## Play
 
 ```bash
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-packs --new
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-packs --new
 ```
 
 Make a character. At camp:
@@ -75,7 +75,7 @@ they grow its bond.
 ## Restore
 
 ```bash
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-packs --restore depths
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-packs --restore depths
 ```
 
 ```text

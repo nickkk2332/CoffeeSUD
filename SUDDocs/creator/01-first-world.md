@@ -1649,7 +1649,7 @@ authored, saved, tested and restored world, and read
 chapter:
 
 ```sh
-python3 docs/creator/examples/check.py
+python3 SUDDocs/creator/examples/check.py
 ```
 
 It builds in a temporary folder, so it changes nothing in your tutorial world.

@@ -16,7 +16,7 @@ function cast(source,target,id){var own=CM.core.GenSeed.begin(1);try{return sour
 function learn(a,id){var skill=a.fetchAbility("Skill_Compose");if(skill==null){skill=CMClass.getAbility("Skill_Compose");skill.setProficiency(100);a.addAbility(skill);}AC.learn(a,id||"example.ember");return skill;}
 function wear(a,name,values){var item=CMClass.getItem("GenArmor");item.setName(name);item.setRawProperLocationBitmap(CM.Items.interfaces.Wearable.WORN_TORSO);a.addItem(item);property(item,values);item.wearAt(CM.Items.interfaces.Wearable.WORN_TORSO);return item;}
 try{
- var comp=new java.io.File("../docs/creator/examples/ability-composition"),pack=new java.io.File("../docs/creator/examples/combat-profiles");
+ var comp=new java.io.File("../SUDDocs/creator/examples/ability-composition"),pack=new java.io.File("../SUDDocs/creator/examples/combat-profiles");
  var modules=new java.io.File(folder,"modules"),defs=new java.io.File(folder,"compositions"),profiles=new java.io.File(folder,"combat");
  copyDir(new java.io.File(comp,"modules"),modules);copyDir(new java.io.File(comp,"compositions"),defs);copyDir(new java.io.File(pack,"modules"),modules);copyDir(new java.io.File(pack,"combat"),profiles);
  var files=profiles.listFiles();for(var i=0;i<files.length;i++){var p=JSON.parse(read(files[i]));p.hit.minimum=100;p.hit.maximum=100;p.block_cap=100;write(files[i],p);}

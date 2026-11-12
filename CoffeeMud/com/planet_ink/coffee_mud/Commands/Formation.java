@@ -103,7 +103,8 @@ public class Formation extends StdCommand
 					for(int i2=0;i2<done[i].size();i2++)
 					{
 						final com.planet_ink.coffee_mud.core.Origins.Origin role=FormationRoles.of(done[i].get(i2));
-						str.append(((i2>0)?", ":"")+done[i].get(i2).name()+((role==null)?"":" ("+role.name()+")"));
+						final String named=(role==null)?FormationRoles.named(done[i].get(i2)):"";
+						str.append(((i2>0)?", ":"")+done[i].get(i2).name()+((role!=null)?" ("+role.name()+")":named.isEmpty()?"":" ("+named.toLowerCase()+", a role this world no longer has)"));
 					}
 					str.append("\n\r");
 				}

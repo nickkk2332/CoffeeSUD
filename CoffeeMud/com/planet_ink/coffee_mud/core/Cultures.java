@@ -30,8 +30,11 @@ import com.planet_ink.coffee_mud.core.save.WorldFiles;
  * adopt it), ABILITIES (ID and proficiency, languages too), TATTOOS, ADOPT
  * (COMMAND: the CULTURE ADOPT command may adopt it; otherwise an origin's
  * CULTURE=, a script or a mentor), LEAVE (NEVER: it cannot be left but by a
- * script's FORCE) and KEEP (abilities that stay on leaving, as a mother
- * tongue).  A character holds one culture at a time, kept as the tattoo
+ * script's FORCE), KEEP (abilities that stay on leaving, as a mother
+ * tongue), TRAINED (KEEP, the default: an ability trained past what the
+ * culture gave stays on leaving; LOSE: it goes too), SPEAKS (a language the
+ * character speaks once adopted) and CREATION (YES: offered at the CULTURE
+ * step of character creation).  A character holds one culture at a time, kept as the tattoo
  * CULTURE_[ID].  Adopting gives only what they did not have, and records
  * what it gave in their story records, so leaving takes away exactly that
  * (KEEP aside): what they had before or learned otherwise is theirs.  At
@@ -153,11 +156,15 @@ public final class Cultures
 		final Origin C = find(id);
 		final String why = why(M, C, how);
 		if(!why.isEmpty())
+		{
+			Provenance.refused(M, FAMILY, "cultures.ini " + id, why, "CULTURE LIST says which cultures you may take up, and why not the others");
 			throw new IOException(why);
+		}
 		final StringBuilder said = new StringBuilder();
-		if(current(M) != null)
+		if((current(M) != null) || !heldId(M).isEmpty())
 			said.append(leave(M, how)).append(' ');
 		final List<String> gave = new ArrayList<String>(), tattoos = new ArrayList<String>(), names = new ArrayList<String>();
+		final MiniJSON.JSONObject profs = new MiniJSON.JSONObject();
 		for(final String entry : words(C.get("ABILITIES")))
 		{
 			final List<String> w = CMParms.parse(entry);
@@ -173,6 +180,7 @@ public final class Cultures
 			M.addAbility(A);
 			A.autoInvocation(M, false);
 			gave.add(A.ID());
+			profs.put(A.ID(), Long.valueOf(A.proficiency()));
 			names.add(A.name());
 		}
 		for(final String t : CMParms.parseAny(C.get("TATTOOS").replace(',', ' '), ' ', true))
@@ -188,10 +196,25 @@ public final class Cultures
 		final MiniJSON.JSONObject rec = StoryRecords.object(data, RECORD);
 		rec.put("current", C.id.toUpperCase(Locale.ROOT));
 		rec.put("gave", gave.toArray());
+		rec.put("profs", profs);
 		rec.put("tattoos", tattoos.toArray());
 		history(rec, C.id, how, "adopted");
+		// the language it speaks, once taken up
+		final String speaks = C.get("SPEAKS");
+		if(speaks.length() > 0)
+		{
+			final Ability L = M.fetchAbility(speaks);
+			if(L != null)
+			{
+				L.autoInvocation(M, false);
+				L.invoke(M, null, false, 0); // not auto: it switches the language spoken (the effect), and tells them
+			}
+			else
+				Log.errOut("Cultures", "cultures.ini [" + C.id + "] SPEAKS: " + M.Name() + " has no language " + speaks);
+		}
 		StoryRecords.write(M, data);
 		ModuleStats.count(FAMILY, C.id.toLowerCase(Locale.ROOT), "adopted by " + how.toLowerCase(Locale.ROOT));
+		Provenance.event(M, FAMILY, "cultures.ini [" + C.id + "]", "took up " + C.name() + " (" + how.toLowerCase(Locale.ROOT) + ")" + (names.isEmpty() ? "" : "; it gave " + String.join(", ", names)));
 		said.append(CMLib.lang().L("You are now of @x1.", C.name()));
 		if(!names.isEmpty())
 			said.append(' ').append(CMLib.lang().L("It gives you: @x1.", String.join(", ", names)));
@@ -217,9 +240,18 @@ public final class Cultures
 	 * the tattoos it gave; refused for LEAVE=NEVER, but by "force".
 	 * @return what happened, in words
 	 */
+	/** the culture a character's records say they hold, even one the file no longer has; "" for none */
+	public static String heldId(final MOB M)
+	{
+		return String.valueOf(StoryRecords.object(StoryRecords.read(M), RECORD).get("current") == null ? "" : StoryRecords.object(StoryRecords.read(M), RECORD).get("current"));
+	}
+
 	public static String leave(final MOB M, final String how) throws IOException
 	{
-		final Origin C = current(M);
+		Origin C = current(M);
+		final String held = heldId(M);
+		if((C == null) && !held.isEmpty())
+			C = new Origin(held); // a culture the file no longer has: left by what was recorded
 		if(C == null)
 			throw new IOException(CMLib.lang().L("you hold no culture"));
 		if(C.get("LEAVE").equalsIgnoreCase("NEVER") && !"force".equalsIgnoreCase(how))
@@ -228,6 +260,8 @@ public final class Cultures
 		final MiniJSON.JSONObject rec = StoryRecords.object(data, RECORD);
 		final Set<String> keep = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 		keep.addAll(words(C.get("KEEP")));
+		final boolean keepTrained = !C.get("TRAINED").equalsIgnoreCase("LOSE");
+		final MiniJSON.JSONObject profs = (rec.get("profs") instanceof MiniJSON.JSONObject) ? (MiniJSON.JSONObject)rec.get("profs") : new MiniJSON.JSONObject();
 		final List<String> gone = new ArrayList<String>(), kept = new ArrayList<String>();
 		for(final String id : strings(rec.get("gave")))
 		{
@@ -237,6 +271,12 @@ public final class Cultures
 			if(keep.contains(A.ID()))
 			{
 				kept.add(A.name());
+				continue;
+			}
+			// trained past what the culture gave: the training is theirs
+			if(keepTrained && (profs.get(A.ID()) instanceof Number) && (A.proficiency() > ((Number)profs.get(A.ID())).intValue()))
+			{
+				kept.add(CMLib.lang().L("@x1 (trained past what it gave)", A.name()));
 				continue;
 			}
 			final Ability E = M.fetchEffect(A.ID());
@@ -253,15 +293,81 @@ public final class Cultures
 		M.delTattoo(tattoo(C));
 		rec.put("current", "");
 		rec.put("gave", new Object[0]);
+		rec.put("profs", new MiniJSON.JSONObject());
 		rec.put("tattoos", new Object[0]);
 		history(rec, C.id, how, "left");
 		StoryRecords.write(M, data);
 		ModuleStats.count(FAMILY, C.id.toLowerCase(Locale.ROOT), "left by " + how.toLowerCase(Locale.ROOT));
+		Provenance.event(M, FAMILY, "cultures.ini [" + C.id + "]", "left " + C.name() + " (" + how.toLowerCase(Locale.ROOT) + ")" + (gone.isEmpty() ? "" : "; it took away " + String.join(", ", gone)));
 		final StringBuilder s = new StringBuilder(CMLib.lang().L("You leave @x1.", C.name()));
 		if(!gone.isEmpty())
 			s.append(' ').append(CMLib.lang().L("It takes away: @x1.", String.join(", ", gone)));
 		if(!kept.isEmpty())
 			s.append(' ').append(CMLib.lang().L("You keep: @x1.", String.join(", ", kept)));
+		return s.toString();
+	}
+
+	/** the cultures the CULTURE step of character creation offers someone: CREATION=YES, and theirs to take */
+	public static List<Origin> creationChoices(final MOB M)
+	{
+		final List<Origin> out = new ArrayList<Origin>();
+		for(final Origin C : all())
+		{
+			if(C.get("CREATION").equalsIgnoreCase("YES") && why(M, C, "creation").isEmpty())
+				out.add(C);
+		}
+		return out;
+	}
+
+	/** the culture chosen at the CULTURE step, kept as a tattoo until creation ends */
+	public static void pick(final MOB M, final Origin C)
+	{
+		for(final Origin O : all())
+			M.delTattoo("CULTUREPICK_" + O.id.toUpperCase(Locale.ROOT));
+		if(C != null)
+			M.addTattoo("CULTUREPICK_" + C.id.toUpperCase(Locale.ROOT));
+	}
+
+	/** the culture chosen at the CULTURE step, or null */
+	public static Origin picked(final MOB M)
+	{
+		for(final Origin O : all())
+		{
+			if(M.findTattoo("CULTUREPICK_" + O.id.toUpperCase(Locale.ROOT)) != null)
+				return O;
+		}
+		return null;
+	}
+
+	/** at the end of creation, after the origin's gifts: the chosen culture is taken up by the same rules as later */
+	public static void applyPick(final MOB M)
+	{
+		final Origin C = picked(M);
+		if(C == null)
+			return;
+		pick(M, null);
+		try
+		{
+			M.tell(adopt(M, C.id, "creation"));
+		}
+		catch(final IOException e)
+		{
+			Log.errOut("Cultures", M.Name() + ": the culture chosen at creation, " + C.name() + ": " + e.getMessage());
+		}
+	}
+
+	/** the CULTURE step's menu */
+	public static String menu(final List<Origin> choices)
+	{
+		final StringBuilder s = new StringBuilder(CMLib.lang().L("\n\r^!Please choose a culture:^N\n\r"));
+		for(int i = 0; i < choices.size(); i++)
+		{
+			final Origin O = choices.get(i);
+			s.append("^H").append(i + 1).append(") ").append(O.name()).append("^N");
+			if(O.get("DESCRIPTION").length() > 0)
+				s.append(": ").append(O.get("DESCRIPTION"));
+			s.append("\n\r");
+		}
 		return s.toString();
 	}
 
@@ -286,7 +392,13 @@ public final class Cultures
 		if(!all)
 		{
 			if(C == null)
+			{
+				final String held = heldId(M);
+				if(!held.isEmpty())
+					return CMLib.lang().L("You are of @x1, which this world no longer has.  From it: @x2.  CULTURE LEAVE takes that away.",
+						held, gave(M).isEmpty() ? CMLib.lang().L("nothing") : String.join(", ", gave(M)));
 				return CMLib.lang().L("You hold no culture.  CULTURE LIST names the cultures of this world.");
+			}
 			s.append(CMLib.lang().L("You are of @x1.", C.name()));
 			if(C.get("DESCRIPTION").length() > 0)
 				s.append(' ').append(C.get("DESCRIPTION"));
@@ -306,25 +418,25 @@ public final class Cultures
 		return (s.length() == 0) ? CMLib.lang().L("This world has no cultures.") : s.toString();
 	}
 
-	/** what WORLD CHECK reports: unknown abilities, and an origin's CULTURE= that names none */
-	public static List<String> problems()
+
+	/** renames.ini: a character's culture under the name the file gives it now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
 	{
-		final List<String> out = new ArrayList<String>();
-		for(final Origin C : all())
+		final List<String> did = new ArrayList<String>();
+		final String held = heldId(M).toUpperCase(Locale.ROOT);
+		final String now = renames.get(held);
+		if(!held.isEmpty() && (now != null))
 		{
-			for(final String entry : words(C.get("ABILITIES")))
-			{
-				final String id = CMParms.parse(entry).get(0);
-				if(CMClass.getAbility(id) == null)
-					out.add("cultures.ini [" + C.id + "]: no ability " + id);
-			}
+			final MiniJSON.JSONObject data = StoryRecords.read(M);
+			StoryRecords.object(data, RECORD).put("current", now);
+			StoryRecords.write(M, data);
+			did.add("culture " + held + " is " + now + " now");
 		}
-		for(final Origin O : Origins.all())
+		for(final Map.Entry<String, String> e : renames.entrySet())
 		{
-			final String c = O.get("CULTURE");
-			if((c.length() > 0) && (find(c) == null))
-				out.add("origins.ini [" + O.id + "] CULTURE: no culture " + c + " in cultures.ini");
+			if(RulesFiles.renameTattoo(M, "CULTUREPICK_" + e.getKey(), "CULTUREPICK_" + e.getValue()))
+				did.add("the culture picked at creation, " + e.getKey() + ", is " + e.getValue() + " now");
 		}
-		return out;
+		return did;
 	}
 }

@@ -290,7 +290,7 @@ Ordinary `FOLLOW` observes `PARTYMAX` too, for characters of the same profile
 follow each other instead of using `PARTY ADD`. NPC followers (pets, hirelings, charmed creatures) do not count; only
 profile characters do.
 
-Example (also in [`docs/party-rules.md`](../party-rules.md)):
+Example (also in [`SUDDocs/party-rules.md`](../party-rules.md)):
 
 ```ini
 # world/world.ini
@@ -382,7 +382,7 @@ INTERCEPT=100
 | `TARGET` | Whom it fights: `LEADER` (the leader's foe, the default), `WEAKEST` (the foe with the least share of its hit points), `STRONGEST` (the most), `CASTER` (the foe with the most mana), `ATTACKER` (a foe attacking the one it guards) |
 | `GUARDS` | Whom it guards: `LEADER` (the default) or a role, the member who holds it |
 | `INTERCEPT` | A share of hit points: when the one it guards is at or below it, the role draws one of their attackers on to itself, each round (`100`: always) |
-| `FALLBACK` | A share of hit points: below it, the role steps behind everyone (a row of its own at the rear), and stays there until moved |
+| `FALLBACK` | A share of hit points: below it, the role steps behind everyone (a row of its own at the rear); it returns to the role's row when a round finds it at or above that share again, or when the fight ends |
 
 `FORMATION ROLES` lists the roles and how each works, in words.
 `FORMATION name ROLE guard` gives a member a role and puts it in the role's
@@ -392,8 +392,14 @@ it, masks can test it (`-TATTOOS +ROLE_GUARD`), and a group of NPCs can have
 roles too: give its members the tattoo (`MPTATTOO`, or the mob's tattoos).
 
 Each round of a fight, before its attacks, a member with a role reacts and
-picks its foe: an interception or a fall back is shown to the room; a change of
-foe is quiet. A guard that has just drawn an attacker fights that attacker.
+picks its foe: an interception, a fall back or a return is shown to the room; a
+change of foe is quiet, but `COMBATDEBUG` explains each choice ("role Archer:
+turns on the goblin from the ogre (the most wounded foe, 40% hit points)"). A guard that has just drawn an attacker fights that attacker.
+A role acts only for a member no one is playing: an NPC follower, or a party
+character other than the one at the terminal. The character you play (and one
+in a window of its own) fights whom you tell it to; `SWITCH` to a party
+character and its role waits, `SWITCH` away and the role takes over again.
+Members keep their roles and rows when the leader travels.
 `WORLD CHECK` names an unknown `TARGET`, a `GUARDS` that names no role, and a
 `ROW`, `INTERCEPT` or `FALLBACK` that is no number.
 
@@ -1138,6 +1144,72 @@ X: a saved item is lost.`, `A room made in play could not be made again: ...`,
 kind of room this game does not have (Y).` and `Quest X is gone from the world.` At
 most 60 lines are kept. A separate block, `The save's optional modules:`, reports
 what the restore did with the save's module state; `FRESH=` does not affect it.
+
+### Rules files
+
+The rules files of the character and organization features are read as they
+are now, every time: a save keeps what each feature recorded (a culture and what
+it gave, a talent decided, a role's name, a pool's units, a personal record),
+not the rules. A save also keeps each rules file's sum, and the restore report
+names each that changed since, with what that means:
+
+| File | After a change |
+| --- | --- |
+| `cultures.ini` | Cultures already taken up keep what they gave; leaving one takes away what was recorded. A culture the file no longer has is still shown by `CULTURE` ("which this world no longer has") and can be left. |
+| `talents.ini` | Talents already decided stay decided; the others are checked against the file as it is now. |
+| `formations.ini` | Members keep their roles by name; a role the file no longer has does nothing until it is given again (`FORMATION` shows it as one the world no longer has). |
+| `orgpools.ini` | Pools keep their units; a kind the file no longer has keeps them, unseen, until it is back. |
+| `challenges.ini` | Personal records are kept; a book the file no longer has is not shown. |
+| `affiliations.ini` | The rules as they are now apply from now on; a new `CONFLICT` does not end memberships already held, it refuses the next join. A `KEEP` is checked again on the next class, race or level change, or within 75 ticks of play. |
+
+```text
+This save was made with another version of the world:
+  The world has changed since this game was saved.
+  Changed rules file: cultures.ini (cultures already taken up keep what they gave; ...).
+```
+
+#### Renaming an entry (renames.ini)
+
+Characters and organizations hold these entries by name, so renaming one in its
+file would leave whoever holds it with a name the world no longer has. To rename
+one, change it in its file and say so in `world/renames.ini`: a `[file]`
+section per rules file, and in it `OLD=NEW` lines.
+
+```ini
+# world/renames.ini
+[cultures.ini]
+RIVERFOLK=RIVERKIN
+[formations.ini]
+GUARD=WARDEN
+[talents.ini]
+TIDES=TIDESENSE
+[challenges.ini]
+OLDTRIALS=TRIALS
+[orgpools.ini]
+SUPPLIES=STORES
+```
+
+When a character comes into the world, what it, its followers and its
+organizations hold by an old name is put under the new one: its culture (and a
+culture picked at creation), a member's role tattoo (`ROLE_GUARD` becomes
+`ROLE_WARDEN`, so masks should test the new name), decided talents, personal
+records filed under a book, and a pool's units (added to any already under the
+new name) with its ledger totals. Each is noted in the `LEDGER` of whoever held
+it, and after a `RESTORE` the report lists them ("a fixp2 role guard: role GUARD
+is WARDEN now (renames.ini)"). Renames chain (`A=B` then `B=C` takes `A` to
+`C`). Keep the lines for as long as saves made before the rename may be
+restored; they do nothing to a character that holds nothing by the old name.
+`affiliations.ini` names organizations rather than entries of its own, so it has
+no section here.
+
+`WORLD CHECK` names a `[file]` that is not one of these, a line that is not
+`OLD=NEW`, a name renamed to itself, renames that go round in a circle, a new
+name the file does not have, and an old name the file still has.
+`WORLD MODULES RULES` lists the rules files with their entries and sums, what a
+change to each means, and the renames in force. Test:
+[q06-renames.js](../../tools/fixtures/fixes/q06-renames.js); the played save
+test (`tools/fixes.sh saves5`) renames a follower's role between the save and
+the restore.
 
 ### A checklist for shipping a patch to a world with existing saves
 

@@ -41,7 +41,7 @@ public class ModCraft extends StdCommand
 				final Item item=mob.findItem(null,words.get(2));
 				if(item==null)
 					throw new java.io.IOException("no such carried item; quote a multiword name");
-				mob.tell(ItemCrafting.pool(item));
+				mob.tell(ItemCrafting.pool(item,mob)); // A23
 			}
 			else if((sub.equals("COMMIT")||sub.equals("CANCEL")||sub.equals("RECEIPT"))&&words.size()<=3)
 			{

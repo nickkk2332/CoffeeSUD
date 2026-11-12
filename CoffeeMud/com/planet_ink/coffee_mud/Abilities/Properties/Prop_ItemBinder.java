@@ -188,6 +188,7 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 	{
 		if((boundToName.length()>0)&&(expires>0)&&(boundAt>=0)&&((GameTime.now()-boundAt)>=expires))
 		{
+			Provenance.event((affected instanceof Physical)?(Physical)affected:null,"binding","Prop_ItemBinder","freed from "+boundToName+": its binding ran out");
 			boundToName="";
 			freed=true;
 			String t=withParm(text(),"BOUND",null);
@@ -198,6 +199,7 @@ public class Prop_ItemBinder extends Property implements TriggeredAffect
 
 	protected void bound(final String name)
 	{
+		Provenance.event((affected instanceof Physical)?(Physical)affected:null,"binding","Prop_ItemBinder","bound to "+name);
 		boundToName=name;
 		boundAt=GameTime.now();
 		String t=withParm(text(),"BOUND",boundToName);

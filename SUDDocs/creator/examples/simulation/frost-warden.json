@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "title": "A warded and a bare combo fighter, with a guard, against an elite frost warden that fights back",
+  "packs": ["ability-composition", "combat-profiles", "named-resources"],
+  "modules": "abilities.composition,combat.profiles,abilities.resources",
+  "profile": {"id": "sim.frost", "version": 1},
+  "definitions": {
+    "compositions": [
+      {"schema": 1, "kind": "skill", "id": "sim.strike", "version": 1, "name": "Heavy strike",
+       "tags": ["attack", "melee"], "damage": {"physical": 20}, "stats": {"mana": 2, "actions": 1, "cooldown": 0, "range": 1},
+       "resources": {"gain": {"sim.combo": 1}, "gain_on": "hit"}},
+      {"schema": 1, "kind": "skill", "id": "sim.finisher", "version": 1, "name": "Finishing blow",
+       "tags": ["attack", "melee"], "damage": {"physical": 45}, "stats": {"mana": 2, "actions": 1, "cooldown": 0, "range": 1},
+       "resources": {"cost": {"sim.combo": 3}}},
+      {"schema": 1, "kind": "skill", "id": "sim.frostclaw", "version": 1, "name": "Frost claw",
+       "tags": ["attack", "melee"], "damage": {"cold": 10}, "stats": {"mana": 0, "actions": 1, "cooldown": 2, "range": 1},
+       "ailments": {"build": {"chill": 50}},
+       "modifiers": [{"stat": "damage", "op": "more", "value": 100, "condition": "status:chill"}]}
+    ],
+    "combat": [
+      {"schema": 1, "id": "sim.frost", "version": 1, "title": "Frost and wards", "conversion": "final",
+       "hit": {"minimum": 5, "maximum": 95}, "armor": {"constant": 5, "maximum_reduction": 90},
+       "resistance": {"minimum": -100, "maximum": 75}, "block_cap": 75, "block_reduction": 100, "maximum_damage": 1000000,
+       "ailments": {"chill": {"title": "Chilled", "threshold": 100, "decay": 5, "status_ticks": 3, "immune_ticks": 2, "effects": "Prop_Adjuster;DEX-5"}},
+       "guard": {"pool": "sim.ward", "recharge_delay": 2}}
+    ],
+    "pools": [
+      {"schema": 1, "id": "sim.ward", "version": 1, "title": "Ward", "max": 30, "start": 30, "reservable": true,
+       "change": {"amount": 3, "every": 1, "clock": "ticks"}},
+      {"schema": 1, "id": "sim.combo", "version": 1, "title": "Combo", "max": 5, "start": 0,
+       "change": {"amount": -1, "every": 3, "clock": "turns"}, "reset": ["miss", "combat_end"]}
+    ],
+    "traits": [
+      {"schema": 1, "id": "sim.brute", "version": 1, "title": "Brutish", "line": "Its knuckles drag on the floor.", "power": 1,
+       "effects": "Prop_Adjuster;hitpoints+100 damage+3"}
+    ]
+  },
+  "formations": "[GUARD]\nNAME=Guard\nROW=0\nTARGET=ATTACKER\nINTERCEPT=50\n",
+  "builds": [
+    {"name": "warded", "hp": 150, "pools": ["sim.ward"], "skills": [{"id": "sim.finisher"}, {"id": "sim.strike"}],
+     "stats": {"schema": 1, "accuracy": 150, "crit_chance": 10}},
+    {"name": "bare", "hp": 150, "skills": [{"id": "sim.finisher"}, {"id": "sim.strike"}],
+     "stats": {"schema": 1, "accuracy": 150, "crit_chance": 10}}
+  ],
+  "allies": [{"name": "Gil the shield-bearer", "hp": 80, "role": "guard"}],
+  "boss": {"name": "a frost warden", "hp": 300, "level": 3, "acts": true, "skills": [{"id": "sim.frostclaw"}], "traits": ["sim.brute"],
+           "stats": {"schema": 1, "evasion": 100, "block": 10, "armor": 20}},
+  "seeds": [11, 12, 13, 14, 15, 16],
+  "turn_limit": 120,
+  "stall_turns": 15,
+  "work_limit": 2000
+}

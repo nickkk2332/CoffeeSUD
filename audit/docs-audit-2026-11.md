@@ -1,10 +1,10 @@
 # CoffeeSUD documentation audit, November 2026
 
-Part of the [audit folder](README.md). Linked from the [creator handbook](../docs/creator/README.md).
+Part of the [audit folder](README.md). Linked from the [creator handbook](../SUDDocs/creator/README.md).
 
 ## Introduction
 
-In November 2026 the creator handbook (`docs/creator/`, chapters 01 to 33) was rewritten chapter by chapter, and each chapter was then checked against the Java by a second pass (verification). Both passes kept notes. This report collects what those notes found that is not a handbook problem: code that does not do what its own help, javadoc or obvious intent says, and shipped text that disagrees with the code.
+In November 2026 the creator handbook (`SUDDocs/creator/`, chapters 01 to 33) was rewritten chapter by chapter, and each chapter was then checked against the Java by a second pass (verification). Both passes kept notes. This report collects what those notes found that is not a handbook problem: code that does not do what its own help, javadoc or obvious intent says, and shipped text that disagrees with the code.
 
 The report holds:
 
@@ -328,7 +328,7 @@ Each entry names the wrong text and what it should say.
 - <a id="h-bm-6"></a>**H-BM-6.** Undocumented keys: Scavenger ATNIGHT, ResourceOverride MOBMASK=, Hireling third `;mask` field, RandomQuests INLINE, WaterCurrents BOATS, MovingRoom DISPLOC, Decay REMAIN, Riddler SOLVED, Emoter first-field `MASK=`, Taxi/Concierge PARTY/PETS/CARGO, MOBTeacher NOHLEXP(S). No help entry for StdBehavior; JSWorldBehavior has a paragraph in `arc_help.ini`; GUILDMASTER, CLANENEMYAGGRESSIVE live in `arc_misc.ini` and TRANSPORTLINE in `arc_travel.ini` (not `BEHAVIOR_` keys). [24][c24]
 - <a id="h-bm-7"></a>**H-BM-7.** `zappermasks.txt` omits AREABLURB, AREAINSTANCE, BIRTH* keys, CLANRANK, CLASSTYPE, JUDGE, OFFICER, PLANE, PORT, QUALLVL, RULER. Polarity is not uniform: for flag keys (ISHOME, AREAINSTANCE, ROOMDARK, OFFICER, JUDGE, WANTED, HOLIDAY, BREATH) `+` requires and `-` forbids; TIDE and list keys use `-` to require; numeric `+STR/+GROUPSIZE` mean "at least", `+ABILITY/+VALUE/+WEIGHT/+ARMOR/+DAMAGE/+ATTACK` "at most". The ISHOME line and the W keys (-ROOMDARK, -BREATH, -TIDE, +HOLIDAY) say "<WORD>" without saying what passes. [24][c24], [10][c10]
 - <a id="h-bm-8"></a>**H-BM-8.** `zappermasks.txt` lines 103-110 describe `-QUESTWIN`/`+QUESTWIN` (and QUESTFAIL, QUESTOUTCOME, QUESTWINS) the wrong way round. Code (`MUDZapper.java` ~6915-6955, 2754-2840): `-QUESTWIN +quest` requires a win; `+QUESTWIN -quest` excludes winners. [08][c08]
-- <a id="h-bm-9"></a>**H-BM-9.** Emoter and `docs/presentation.md` say QUIETAFTER quiets ambience "during combat or narration"; `Ambience.quiet` returns false when ticks<=0, so it acts only with QUIETAFTER=n>0, and only Emoter reads it (not Sounder). [06][c06], [11][c11]
+- <a id="h-bm-9"></a>**H-BM-9.** Emoter and `SUDDocs/presentation.md` say QUIETAFTER quiets ambience "during combat or narration"; `Ambience.quiet` returns false when ticks<=0, so it acts only with QUIETAFTER=n>0, and only Emoter reads it (not Sounder). [06][c06], [11][c11]
 - <a id="h-bm-10"></a>**H-BM-10.** Smaller NPC help gaps: Memory help lists only `> >= = <`, code also accepts `<=` and `!=`; Prop_NPCLines rewords any `postSay` line, not only "stock lines"; Hireling "minutes" are real minutes shown as game hours (game days with CONTRACT=DAYS); Escortee MODE=LEAD help says the party follows (nothing makes it); Escortee PANIC other than FLEE/HIDE acts as COWER; Healer help names five prayers while `audit/C-combat-and-encounters.md` says six. [06][c06], [29][c29] **Fixed:** the help batch corrected the Memory, Prop_NPCLines and Healer help, whose code already did what the corrected help says. Escortee MODE=LEAD now makes the head of its leader's party follow it, so the party comes along, and releases them on arrival, timeout or death; the party is still led by the player's character (`core/Party.java` `leaderOf`), and a follower of the player's, such as a hireling or pet, still counts as the player's while they follow the escortee: it is saved with the player, not twice, kept by the tick cleanup, and on the player's side for difficulty (`WorldState`, `ServiceEngine`, `MOBloader`, `GameDifficulty`, `Downed`, `GenSource`, `UndoLog`). An unknown PANIC word is ignored and shown by STAT BEHAVIORS, not taken for COWER. Hireling tells every time in game time (the time left as game hours, or game days with CONTRACT=DAYS; a quest or until-fired contract tells its terms). A paid extension is in the contract's unit: with CONTRACT=DAYS it used to add minutes. Tests: `tools/fixtures/fixes/n20-escortee.js` (party-follows, party-leader, led-follower, led-follower-saved, led-there, led-released, led-kept, panic-unknown) and `n21-hireling.js` (left-hours, left-untilfired, left-days, extend-days).
 
 ### Items and crafting
@@ -372,8 +372,8 @@ Each entry names the wrong text and what it should say.
 
 ### Travel and instances
 
-- <a id="h-ti-1"></a>**H-TI-1.** BEHAVIOR_MOVINGROOM documents only the legacy `min= max= chance=` form; ROUTE=, LINE=, DEPART=, SIGN=, DISPLOC= are in `docs/travel.md` only. PROP_JOURNEY help lists REFUND=NONE|FULL|UNUSED; the code treats any value but NONE as a refund and any but UNUSED as full. PROP_TICKETTAKER help is the original; FARE/PARTY/PETS/CARGO are documented only in handbook chapter 23 and `docs/travel.md`. [30][c30]
-- <a id="h-ti-2"></a>**H-TI-2.** TransportLine PASSENGERONLY defaults to true (every vessel with a TransportLine gets a crew-only helm unless it has its own Prop_HelmRestrict); help examples show `true` without saying it is the default. `docs/travel.md`: Prop_Waypoint COST also accepts `movement` and `money`; ResetWhole keeps a bare number, RLHOUR and MUDHOUR rules. `AuthoringSchema` marks Prop_Journey DEST and DURATION required, help calls DEST "[room or port]". [30][c30]
+- <a id="h-ti-1"></a>**H-TI-1.** BEHAVIOR_MOVINGROOM documents only the legacy `min= max= chance=` form; ROUTE=, LINE=, DEPART=, SIGN=, DISPLOC= are in `SUDDocs/travel.md` only. PROP_JOURNEY help lists REFUND=NONE|FULL|UNUSED; the code treats any value but NONE as a refund and any but UNUSED as full. PROP_TICKETTAKER help is the original; FARE/PARTY/PETS/CARGO are documented only in handbook chapter 23 and `SUDDocs/travel.md`. [30][c30]
+- <a id="h-ti-2"></a>**H-TI-2.** TransportLine PASSENGERONLY defaults to true (every vessel with a TransportLine gets a crew-only helm unless it has its own Prop_HelmRestrict); help examples show `true` without saying it is the default. `SUDDocs/travel.md`: Prop_Waypoint COST also accepts `movement` and `money`; ResetWhole keeps a bare number, RLHOUR and MUDHOUR rules. `AuthoringSchema` marks Prop_Journey DEST and DURATION required, help calls DEST "[room or port]". [30][c30]
 - <a id="h-ti-3"></a>**H-TI-3.** `areainstancetypes.txt` header says `@x1` is the base area median level; `InstanceArea.java` (~1096, ~1155) passes `instanceLevel` for both `@x1` and `@x3`. The header documents OPPOSED and TRANSITIONAL (not accepted) and omits ARMORADJ and friends (unused). [30][c30]
 
 ### Saves and party
@@ -523,33 +523,33 @@ Help-text batch fix, in one pass over `CoffeeMud/resources/help/*.ini` and `coff
 - Missing entries: QUEST and SCRIPT in GENERATE, GUILD in CREATE, `WORLD CHECK` parts, WEATHER/TIME subcommands, MPCLANRELATION, MPCONQUER, function syntax lines, Prop and behavior help for the classes in H-PR-5 and H-BM-6.
 - Stale audit text in `audit/` (H-DT-4) can be corrected in the same pass.
 
-[c01]: ../docs/creator/01-first-world.md
-[c02]: ../docs/creator/02-world-workflow.md
-[c03]: ../docs/creator/03-characters.md
-[c04]: ../docs/creator/04-mobprog.md
-[c05]: ../docs/creator/05-javascript.md
-[c06]: ../docs/creator/06-npcs-dialogue.md
-[c07]: ../docs/creator/07-items-crafting.md
-[c08]: ../docs/creator/08-quests.md
-[c09]: ../docs/creator/09-society.md
-[c10]: ../docs/creator/10-world-simulation.md
-[c11]: ../docs/creator/11-presentation-language.md
-[c12]: ../docs/creator/12-generation.md
-[c13]: ../docs/creator/13-testing-release.md
-[c17]: ../docs/creator/17-item-modifiers-crafting.md
-[c18]: ../docs/creator/18-installing-and-running.md
-[c19]: ../docs/creator/19-configuration-and-administration.md
-[c20]: ../docs/creator/20-areas-rooms-exits.md
-[c21]: ../docs/creator/21-mobs.md
-[c22]: ../docs/creator/22-items.md
-[c23]: ../docs/creator/23-properties-reference.md
-[c24]: ../docs/creator/24-behaviors-and-masks.md
-[c25]: ../docs/creator/25-abilities-and-effects.md
-[c26]: ../docs/creator/26-mobprog-triggers.md
-[c27]: ../docs/creator/27-mobprog-commands.md
-[c28]: ../docs/creator/28-mobprog-functions.md
-[c29]: ../docs/creator/29-combat-and-encounters.md
-[c30]: ../docs/creator/30-travel-vehicles-instances.md
-[c31]: ../docs/creator/31-saves-and-party.md
-[c32]: ../docs/creator/32-engine-programming.md
-[c33]: ../docs/creator/33-engine-internals.md
+[c01]: ../SUDDocs/creator/01-first-world.md
+[c02]: ../SUDDocs/creator/02-world-workflow.md
+[c03]: ../SUDDocs/creator/03-characters.md
+[c04]: ../SUDDocs/creator/04-mobprog.md
+[c05]: ../SUDDocs/creator/05-javascript.md
+[c06]: ../SUDDocs/creator/06-npcs-dialogue.md
+[c07]: ../SUDDocs/creator/07-items-crafting.md
+[c08]: ../SUDDocs/creator/08-quests.md
+[c09]: ../SUDDocs/creator/09-society.md
+[c10]: ../SUDDocs/creator/10-world-simulation.md
+[c11]: ../SUDDocs/creator/11-presentation-language.md
+[c12]: ../SUDDocs/creator/12-generation.md
+[c13]: ../SUDDocs/creator/13-testing-release.md
+[c17]: ../SUDDocs/creator/17-item-modifiers-crafting.md
+[c18]: ../SUDDocs/creator/18-installing-and-running.md
+[c19]: ../SUDDocs/creator/19-configuration-and-administration.md
+[c20]: ../SUDDocs/creator/20-areas-rooms-exits.md
+[c21]: ../SUDDocs/creator/21-mobs.md
+[c22]: ../SUDDocs/creator/22-items.md
+[c23]: ../SUDDocs/creator/23-properties-reference.md
+[c24]: ../SUDDocs/creator/24-behaviors-and-masks.md
+[c25]: ../SUDDocs/creator/25-abilities-and-effects.md
+[c26]: ../SUDDocs/creator/26-mobprog-triggers.md
+[c27]: ../SUDDocs/creator/27-mobprog-commands.md
+[c28]: ../SUDDocs/creator/28-mobprog-functions.md
+[c29]: ../SUDDocs/creator/29-combat-and-encounters.md
+[c30]: ../SUDDocs/creator/30-travel-vehicles-instances.md
+[c31]: ../SUDDocs/creator/31-saves-and-party.md
+[c32]: ../SUDDocs/creator/32-engine-programming.md
+[c33]: ../SUDDocs/creator/33-engine-internals.md

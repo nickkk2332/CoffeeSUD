@@ -1113,6 +1113,8 @@ public class WorldCmd extends StdCommand
 					mob.tell(ModuleStats.report()); // Q12: the work the modules did in this session
 				else if(sub.equalsIgnoreCase("STREAMS") && commands.size() == 3)
 					mob.tell(RandomStreams.describe()); // Q09: where each random stream is
+				else if(sub.equalsIgnoreCase("RULES") && commands.size() == 3)
+					mob.tell(RulesFiles.describe()); // phase 2's rules files, and renames.ini
 				else if(sub.equalsIgnoreCase("ADOPT") && commands.size() == 4)
 				{
 					OptionalModules.adopt(commands.get(3));

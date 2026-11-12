@@ -35,7 +35,7 @@ public class ItemMods extends StdCommand
 			if(item==null)
 				mob.tell("ITEMMODS [carried item] lists its saved modifiers, source pins and protection.");
 			else
-				mob.tell(ItemModifiers.inspect(item));
+				mob.tell(ItemModifiers.inspect(item,mob)); // A23: named as the one asking knows it
 		}
 		catch(final java.io.IOException e)
 		{

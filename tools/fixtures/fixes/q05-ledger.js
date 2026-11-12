@@ -19,7 +19,7 @@ function throws(name, fn, part) { var why = ""; try { fn(); } catch (e) { why = 
 var room = scratchRoom(), actors = [], items = [];
 function player(name) { var m = newMob("GenMob", room); m.setName(name); m.setPlayerStats(CMClass.getCommon("DefaultPlayerStats")); actors.push(m); return m; }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "reward-escrow"), folder);
 	copy(new java.io.File(ex, "progression-tracks"), folder);
 	new java.io.File(folder, "README.md").delete();

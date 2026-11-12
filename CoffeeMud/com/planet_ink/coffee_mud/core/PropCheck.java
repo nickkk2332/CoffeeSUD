@@ -181,6 +181,20 @@ public final class PropCheck
 				}
 			}
 		}
+		// records written as JSON: read them as the game will (P04, I14)
+		if(A.ID().equals(Services.PROPERTY))
+		{
+			final String why = Services.problem(text);
+			if(!why.isEmpty())
+				out.add("its service records cannot be read: " + why);
+		}
+		else
+		if(A.ID().equals(OfferBooks.PROPERTY))
+		{
+			final String why = OfferBooks.problem(text);
+			if(!why.isEmpty())
+				out.add("its offer book cannot be read: " + why);
+		}
 		// keys its help does not name
 		for(final String k : unknownKeys(A.ID(), text))
 			out.add("unknown key " + k + " (AHELP " + A.ID().toUpperCase() + ")");

@@ -1,6 +1,6 @@
 # CoffeeSUD: builder capabilities audit
 
-Current creator documentation: [handbook and cookbook](../docs/creator/README.md).
+Current creator documentation: [handbook and cookbook](../SUDDocs/creator/README.md).
 The [developer-tool audit](developer-tools-audit.md) covers the current tool
 contracts and documentation; the topic files below preserve original proposals
 and baseline analysis. Use `followup_status` in the inventory for current status.

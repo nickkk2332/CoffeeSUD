@@ -341,9 +341,15 @@ public final class ItemModifiers
 	}
 	public static String inspect(final Item item)throws IOException
 	{
+		return inspect(item,null);
+	}
+	/** ITEMMODS: an item's modifier record, the item named as the viewer knows it (A23; no viewer, its real name) */
+	public static String inspect(final Item item,final MOB viewer)throws IOException
+	{
 		final JSONObject data=data(item);
 		final List<JSONObject> mods=ItemModifierRules.modifiers(data);
-		final StringBuilder out=new StringBuilder(item.Name()+"\nBase: "+((JSONObject)data.get("base")).get("id")+"; revision "+data.get("revision")
+		final String named=(viewer==null)?item.Name():item.name(viewer);
+		final StringBuilder out=new StringBuilder(named+"\nBase: "+((JSONObject)data.get("base")).get("id")+"; revision "+data.get("revision")
 			+"; capacity "+data.get("prefixes")+" prefix / "+data.get("suffixes")+" suffix\nOrigin: "+data.get("source"));
 		if(!OptionalModules.enabled(MODULE))
 			out.append("\nModifier bonuses/crafting suspended: module inactive.");
@@ -385,7 +391,7 @@ public final class ItemModifiers
 			else
 			{
 				final Object[] options=(Object[])v.get("options");
-				out.append(": revealed; CHOICES PICK \"").append(item.Name()).append("\" [number] settles one of:");
+				out.append(": revealed; CHOICES PICK \"").append(named).append("\" [number] settles one of:");
 				for(int k=0;k<options.length;k++)
 				{
 					final JSONObject m=(JSONObject)options[k];

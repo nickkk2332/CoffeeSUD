@@ -22,7 +22,7 @@ function catalogMob(name, scripted) {
 	m.text(); CMLib.catalog().addCatalog(m); catalogued.push(name);
 }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	var packs = ["ability-composition", "named-resources", "causal-triggers", "reward-escrow", "encounter-director", "expeditions", "progression-tracks", "item-modifiers", "workbench", "loot-policies"];
 	for (var i = 0; i < packs.length; i++) copy(new java.io.File(ex, packs[i]), folder);
 	new java.io.File(folder, "README.md").delete();

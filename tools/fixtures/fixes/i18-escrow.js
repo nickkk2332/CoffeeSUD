@@ -25,7 +25,7 @@ function boot(snapshot) {
 	currentField.set(null, OM.prepare(plan, snapshot, snapshot != null)); RE.reset();
 }
 try {
-	var ex = new java.io.File("../docs/creator/examples/reward-escrow");
+	var ex = new java.io.File("../SUDDocs/creator/examples/reward-escrow");
 	copyDir(new java.io.File(ex, "modules"), dir("modules"));
 	var rewards = dir("rewards");
 	copyDir(new java.io.File(ex, "rewards"), rewards);

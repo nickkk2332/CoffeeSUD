@@ -12,7 +12,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 GAME = ROOT / 'CoffeeMud'
-EXAMPLES = ROOT / 'docs/creator/examples'
+EXAMPLES = ROOT / 'SUDDocs/creator/examples'
 scratch = Path(sys.argv[1]).resolve()
 scratch.mkdir(parents=True, exist_ok=True)
 world, db, saves = (scratch / name for name in ('world', 'db', 'saves'))

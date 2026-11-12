@@ -62,6 +62,7 @@ public class Offers extends StdCommand
 		catch(final java.io.IOException e)
 		{
 			mob.tell("Offers: "+e.getMessage()+". Nothing was paid or drawn.");
+			Provenance.refused(mob,OfferBooks.FAMILY,"OFFERS",e.getMessage(),"OFFERS shows the book, its prices and its fee");
 		}
 		return false;
 	}

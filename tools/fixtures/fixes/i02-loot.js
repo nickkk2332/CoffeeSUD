@@ -25,7 +25,7 @@ function affixes(I) { var m = rec(I).modifiers, out = []; for (var i = 0; i < m.
 var plan = null;
 function boot(modules) { plan = MD.load(root, modules, ""); currentField.set(null, OM.prepare(plan, null, false)); IL.reset(); IM.reset(); }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "ability-composition/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/combat"), new java.io.File(root, "combat"));

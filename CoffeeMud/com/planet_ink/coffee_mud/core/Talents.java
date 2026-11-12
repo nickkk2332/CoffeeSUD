@@ -102,8 +102,6 @@ public final class Talents
 		{
 			if(t.lore.isEmpty())
 				out.add("talents.ini: " + t.id + ": LORE names no lore, so it would awaken at once");
-			if((t.ability.length() > 0) && (CMClass.getAbility(t.ability) == null))
-				out.add("talents.ini: " + t.id + ": no ability " + t.ability);
 		}
 		return out;
 	}
@@ -152,6 +150,8 @@ public final class Talents
 				continue;
 			final boolean awakens = (t.chance >= 100) || ((t.chance > 0) && (RandomStreams.roll(STREAM, 100) <= t.chance));
 			ModuleStats.count(FAMILY, t.id.toLowerCase(Locale.ROOT), awakens ? "awakened" : "dormant");
+			Provenance.event(who, FAMILY, "talents.ini " + t.id, (awakens ? "awakened: " : "did not awaken, and will not: ") + t.title
+				+ (((t.chance > 0) && (t.chance < 100)) ? " (a " + t.chance + "% chance, drawn once)" : ""));
 			if(!awakens)
 			{
 				who.addTattoo("TALENT_" + t.id + "_DORMANT");
@@ -197,5 +197,19 @@ public final class Talents
 				s.append("latent; it waits for ").append(String.join(", ", missing(who, t)));
 		}
 		return s.toString();
+	}
+
+	/** renames.ini: a character's decided talents under the names the file gives them now; @return what was renamed */
+	public static List<String> rename(final MOB M, final Map<String, String> renames)
+	{
+		final List<String> did = new ArrayList<String>();
+		for(final Map.Entry<String, String> e : renames.entrySet())
+		{
+			final boolean a = RulesFiles.renameTattoo(M, "TALENT_" + e.getKey(), "TALENT_" + e.getValue());
+			final boolean b = RulesFiles.renameTattoo(M, "TALENT_" + e.getKey() + "_DORMANT", "TALENT_" + e.getValue() + "_DORMANT");
+			if(a || b)
+				did.add("talent " + e.getKey() + " is " + e.getValue() + " now");
+		}
+		return did;
 	}
 }

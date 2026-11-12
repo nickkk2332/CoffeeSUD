@@ -20,7 +20,7 @@ function actor(name) { var m = newMob("GenMob", room); m.setName(name); m.baseSt
 function stats(m, json) { var p = CMClass.getAbility("Prop_CombatStats"); p.setMiscText(JSON.stringify(json)); m.addNonUninvokableEffect(p); }
 function sum(map) { var t = 0, it = map.values().iterator(); while (it.hasNext()) t += Number(it.next()); return t; }
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "ability-composition"), folder);
 	copy(new java.io.File(ex, "combat-profiles"), folder);
 	new java.io.File(folder, "README.md").delete();

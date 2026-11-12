@@ -11,8 +11,8 @@ Use a [separate deployment](examples/README.md). Copy the example directories
 into that world's directory; merge them if these directories already exist:
 
 ```sh
-cp -R docs/creator/examples/ability-composition/modules /your/deployment/world/
-cp -R docs/creator/examples/ability-composition/compositions /your/deployment/world/
+cp -R SUDDocs/creator/examples/ability-composition/modules /your/deployment/world/
+cp -R SUDDocs/creator/examples/ability-composition/compositions /your/deployment/world/
 ```
 
 Merge into its `world.ini`, preserving existing selections and settings:

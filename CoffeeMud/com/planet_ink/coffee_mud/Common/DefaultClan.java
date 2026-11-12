@@ -840,6 +840,7 @@ public class DefaultClan implements Clan
 			if(why.length()>0)
 			{
 				M.tell(why+".");
+				Provenance.refused(M,com.planet_ink.coffee_mud.core.Affiliations.FAMILY,"affiliations.ini CONFLICT",why,"leave the organization it cannot be held with first");
 				return;
 			}
 		}

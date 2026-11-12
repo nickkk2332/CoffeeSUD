@@ -51,6 +51,34 @@ public class Look extends StdCommand
 		return true;
 	}
 
+	/**
+	 * A23: a thing's name in the room, with its number when it has one, as the
+	 * one looking knows it: an item they do not know is named by its unknown
+	 * name, and numbered among what they take for the same thing.
+	 */
+	protected String seenContextName(final Room R, final MOB mob, final Environmental E)
+	{
+		if(E instanceof Item)
+		{
+			final Item I=(Item)E;
+			final String seen=I.name(mob);
+			if(!seen.equals(I.name()))
+			{
+				int context=1;
+				for(final Enumeration<Item> i=R.items();i.hasMoreElements();)
+				{
+					final Item O=i.nextElement();
+					if(O==I)
+						return (context<2)?seen:(seen+"."+context);
+					if((O!=null)&&(O.container()==I.container())&&(O.name(mob).equalsIgnoreCase(seen)))
+						context++;
+				}
+				return seen;
+			}
+		}
+		return R.getContextName(E);
+	}
+
 	@Override
 	public boolean execute(final MOB mob, final List<String> commands, final int metaFlags)
 		throws java.io.IOException
@@ -226,9 +254,9 @@ public class Look extends StdCommand
 							||CMLib.english().containsString(I.displayText(mob), ID))
 						&&(flagLib.canBeSeenBy(I, mob)))
 						{
-							String name = R.getContextName(I);
+							String name = seenContextName(R, mob, I);
 							if(I.container() != null)
-								name += " in " + R.getContextName(I.container());
+								name += " in " + seenContextName(R, mob, I.container());
 							things.add("^I"+name+"^?");
 						}
 					}
@@ -263,9 +291,9 @@ public class Look extends StdCommand
 				}
 				else
 				{
-					String name = R.getContextName(thisThang);
+					String name = seenContextName(R, mob, thisThang);
 					if((thisThang != null) && (((Item)thisThang).container() != null))
-						name += " in " + R.getContextName(((Item)thisThang).container());
+						name += " in " + seenContextName(R, mob, ((Item)thisThang).container());
 					things.add(name);
 				}
 				if(things.size()==0)

@@ -26,11 +26,11 @@ From the repository root, with Python 3.8+ and a JDK on PATH. Make and publish
 an Ember Trial deployment, then copy the packs into its world:
 
 ```bash
-python3 docs/creator/examples/ember-trial/make_world.py /tmp/sud-packs
+python3 SUDDocs/creator/examples/ember-trial/make_world.py /tmp/sud-packs
 ```
 
 ```bash
-for pack in guild-laboratory bonded-familiar branching-expedition; do (cd docs/creator/examples/$pack && cp -r $(ls -d */) /tmp/sud-packs/world/); done
+for pack in guild-laboratory bonded-familiar branching-expedition; do (cd SUDDocs/creator/examples/$pack && cp -r $(ls -d */) /tmp/sud-packs/world/); done
 ```
 
 In `/tmp/sud-packs/world/world.ini`, add the packs' modules to the `MODULES`
@@ -66,7 +66,7 @@ they add to the world each time.
 ## Play
 
 ```bash
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-packs --new
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-packs --new
 ```
 
 Make a character (Human/Apprentice works). At camp:
@@ -91,7 +91,7 @@ iron. `STATUS` shows the work piece: `1 of 2 stages done; next Bind the seams`.
 ## Restore
 
 ```bash
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-packs --restore lab
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-packs --restore lab
 ```
 
 ```text

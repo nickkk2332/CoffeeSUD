@@ -70,6 +70,9 @@ try {
 	// a book that cannot be read says why
 	var Bad = CMClass.getAbility("Prop_OfferBook"); Bad.setMiscText(JSON.stringify({ items: ["a fixi14 nothing"] }));
 	check("problem", s(Bad.accountForYourself()).indexOf("no catalog item 'a fixi14 nothing'") >= 0, s(Bad.accountForYourself()));
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ev = evs(A);
+	check("ledger", ev.indexOf("held the offer of") >= 0 && ev.indexOf("to draw the offer book again") >= 0 && ev.indexOf("bought ") >= 0, ev);
 } finally {
 	for (var i = 0; i < made.length; i++) if (!made[i].amDestroyed()) made[i].destroy();
 	if (A != null) A.destroy(); if (seller != null) seller.destroy();

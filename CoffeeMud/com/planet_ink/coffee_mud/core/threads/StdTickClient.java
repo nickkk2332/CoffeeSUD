@@ -38,6 +38,8 @@ public class StdTickClient implements TickClient
 		tickDown=newTickDown;
 		clientObject=newClientObject;
 		tickID=newTickID;
+		if(newClientObject != null)
+			TickOrder.of(newClientObject); // its place in the tick order: when it first came
 	}
 
 	@Override
@@ -110,8 +112,9 @@ public class StdTickClient implements TickClient
 	@Override
 	public int compareTo(final TickClient arg0)
 	{
+		// the order its object first came to the tick system, not its hash code (an identity hash moves between builds)
 		if(clientObject != arg0.getClientObject())
-			return (clientObject.hashCode() > arg0.getClientObject().hashCode())?1:-1;
+			return (TickOrder.of(clientObject) > TickOrder.of(arg0.getClientObject()))?1:-1;
 		if(tickID>arg0.getTickID())
 			return 1;
 		if(tickID<arg0.getTickID())

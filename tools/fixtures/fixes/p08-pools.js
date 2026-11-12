@@ -22,8 +22,9 @@ try {
 	Files.write(new java.io.File(root, "orgpools.ini").toPath(), new java.lang.String(
 		'SUPPLIES=TITLE="Supplies" MAX=10 MONEY=5\nORE=TITLE="Ore stock" MAX=50 MATERIAL=IRON\nEMPTY=TITLE="Nothing"\nODD=TITLE="Odd" MATERIAL=NOSUCHSTUFF\n').getBytes("UTF-8"));
 	WorldFiles.configure(root);
-	var probs = s(OP.problems());
-	check("problems", probs.indexOf("EMPTY: no one can give to it") >= 0 && probs.indexOf("ODD: no registered material NOSUCHSTUFF") >= 0, probs);
+	var probs = s(OP.problems()), refs = s(CM.core.CrossRefs.errors());
+	check("problems", probs.indexOf("EMPTY: no one can give to it") >= 0 && refs.indexOf("orgpools.ini: ODD/MATERIAL: no registered material NOSUCHSTUFF") >= 0
+		&& refs.indexOf("orgpools.ini: ORE") < 0, probs + " / " + refs);
 	var order = makeOrg("Fixp08 Order");
 	var P = person("Fixp08 Pip"), Q = person("Fixp08 Quill");
 	var VS = new JavaAdapter(CM.Common.FakeSession, { isFake: function() { return false; } });
@@ -79,9 +80,39 @@ try {
 		&& Number(ledger.get("givers").get("SUPPLIES").get("Fixp08 Pip")) == 15 && Number(ledger.get("users").get("SUPPLIES").get("Fixp08 Quill")) == 11,
 		"entries " + entries.length + " serial " + ledger.get("serial") + " first " + entries[0].get("receipt"));
 
+	// ranks: a pool that pays only for some ranks' services, and pools some ranks may take from (POOLS TAKE)
+	var rank = s(order.getRoleName(G.getAcceptPos(), false, false));
+	Files.write(new java.io.File(root, "orgpools.ini").toPath(), new java.lang.String(
+		'SUPPLIES=TITLE="Supplies" MAX=10 MONEY=5\nORE=TITLE="Ore stock" MAX=50 MATERIAL=IRON TAKERS="' + rank + '"\n'
+		+ 'TOOLS=TITLE="Tools" MAX=20 MONEY=2 SPENDERS="nosuchrank" TAKERS="' + rank + '"\n').getBytes("UTF-8"));
+	check("spenders", s(OP.whyNotSpend(P, order, "TOOLS")).indexOf("Fixp08 Order's tools pays only for nosuchrank") >= 0 && s(OP.whyNotSpend(P, order, "SUPPLIES")) == "",
+		s(OP.whyNotSpend(P, order, "TOOLS")));
+	OP.give(P, order, "TOOLS", 5);
+	had = money(P);
+	var took = s(OP.take(P, order, "TOOLS", 2));
+	check("take-money", money(P) == had + 4 && OP.units(order, "TOOLS") == 3 && took.indexOf("You take 2 unit(s) from Fixp08 Order's Tools") >= 0, took + " / " + money(P) + " " + had);
+	var noTake = err(function () { OP.take(P, order, "SUPPLIES", 1); });
+	var outsiderTake = err(function () { OP.take(Q, order, "TOOLS", 1); });
+	check("takers", noTake.indexOf("no one takes from Fixp08 Order's Supplies") >= 0 && outsiderTake.indexOf("only members take") >= 0, noTake + " / " + outsiderTake);
+	var oreBefore = OP.units(order, "ORE");
+	said(); cmd.execute(P, list("POOLS", "TAKE", "2", "ORE"), 0);
+	out = said();
+	var pile = null; for (var e = P.items(); e.hasMoreElements();) { var I = e.nextElement(); if (I != ore && I.material() == RM.RESOURCE_IRON) pile = I; }
+	check("take-material", OP.units(order, "ORE") == oreBefore - 2 && pile != null && pile.basePhyStats().weight() == 2 && out.indexOf("You take 2 unit(s)") >= 0, out);
+	// a script adds to a pool and reads it (MPPOOL, POOL())
+	var supplies = OP.units(order, "SUPPLIES");
+	var clerk = scriptedMob("Fixp08clerk", 'RAND_PROG 100\nMPPOOL "Fixp08 Order" ADD SUPPLIES 2 a gift\nmpsetvar FIXTEST FIXP08POOL $%POOL(Fixp08 Order SUPPLIES)%\nIF POOL(Fixp08 Order SUPPLIES >= 3)\nmpsetvar FIXTEST FIXP08IF yes\nENDIF\n~\n');
+	tickMob(clerk); clerk.destroy();
+	check("script", OP.units(order, "SUPPLIES") == supplies + 2 && gvar("FIXP08POOL") == "" + (supplies + 2) && s(OP.show(P)).indexOf("a script added 2 supplies (a gift)") >= 0 && gvar("FIXP08IF") == "yes",
+		"units " + OP.units(order, "SUPPLIES") + " var " + gvar("FIXP08POOL") + " if " + gvar("FIXP08IF"));
+	clearVar("FIXP08POOL"); clearVar("FIXP08IF");
+	// LEDGER: the character's gifts and takings
+	var evs = CM.core.Provenance.recent(P), events = ""; for (var ei = 0; ei < evs.size(); ei++) events += s(evs.get(ei).describe()) + "\n";
+	check("ledger", events.indexOf("gave 5 unit(s) of Fixp08 Order's tools") >= 0 && events.indexOf("took 2 unit(s) of Fixp08 Order's ore") >= 0, events);
+
 	// saved with the organization
 	var copy = CMClass.getCommon("DefaultClan"); copy.setDataXML(order.getDataXML());
-	check("saved", s(copy.getStat("POOLS")) == s(order.getStat("POOLS")) && s(copy.getStat("POOLLEDGER")) == s(order.getStat("POOLLEDGER")) && OP.units(copy, "SUPPLIES") == 2,
+	check("saved", s(copy.getStat("POOLS")) == s(order.getStat("POOLS")) && s(copy.getStat("POOLLEDGER")) == s(order.getStat("POOLLEDGER")) && OP.units(copy, "SUPPLIES") == OP.units(order, "SUPPLIES"),
 		s(copy.getStat("POOLS")));
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) m.destroy(); });

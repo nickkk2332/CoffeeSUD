@@ -164,7 +164,7 @@ runs the test and returns a boolean, `NAME$(args)` returns the value text. That
 | Game mode, party, saves | [ISBUILDER](#isbuilder), [ISDEV](#isdev), [ISTURNBASED](#isturnbased), [ISPAUSED](#ispaused), [SAVESLOT](#saveslot), [PARTYSIZE](#partysize), [INPARTY](#inparty), [PARTYLEADER](#partyleader), [PARTY](#party), [ISPLAYED](#isplayed) |
 | Combat | [THREAT](#threat), [TOPTHREAT](#topthreat), [WEAKEST](#weakest), [OPPONENT](#opponent), [PHASE](#phase), [ALARM](#alarm) |
 | Shops, law, property | [SHOPITEM](#shopitem), [NUMITEMSSHOP](#numitemsshop), [SHOPHAS](#shophas), [SHOPPRICE](#shopprice), [SHOPBUDGET](#shopbudget), [PRICE](#price), [ISWANTED](#iswanted), [WARRANTS](#warrants), [FINESOWED](#finesowed), [OWNER](#owner), [ISOWNER](#isowner), [LANDTITLE](#landtitle), [COMFORT](#comfort) |
-| Clans and organisations | [CLAN](#clan), [CLANRANK](#clanrank), [CLANDATA](#clandata), [CLANQUALIFIES](#clanqualifies), [CLANPOS](#clanpos), [CLANMEMBER](#clanmember), [CLANS](#clans), [CLANRELATION](#clanrelation), [AREACLAN](#areaclan), [AREACONTROL](#areacontrol), [REVOLTCHANCE](#revoltchance) |
+| Clans and organisations | [CLAN](#clan), [CLANRANK](#clanrank), [CLANDATA](#clandata), [CLANQUALIFIES](#clanqualifies), [CLANPOS](#clanpos), [CLANMEMBER](#clanmember), [CLANS](#clans), [CLANRELATION](#clanrelation), [AREACLAN](#areaclan), [AREACONTROL](#areacontrol), [REVOLTCHANCE](#revoltchance), [POOL](#pool) |
 | Vessels and riding | [ABOARD](#aboard), [RIDERS](#riders), [ISANCHORED](#isanchored), [ISDOCKED](#isdocked), [COURSE](#course), [VESSELROOM](#vesselroom), [RIDING](#riding), [SPEED](#speed), [HULL](#hull) |
 | Messages | [MSG](#msg) |
 | Generators, names | [GENSTRING](#genstring), [RANDNAME](#randname), [GENVAR](#genvar) |
@@ -1106,6 +1106,13 @@ When an entry says "not inherited" the function is a CoffeeSUD addition.
 - **Test:** `AFFINITY(npc who cmp n)`
 - **Example:** `IF AFFINITY($i $n >= 20)`
 - **Notes:** not inherited; see [06-npcs-dialogue.md](06-npcs-dialogue.md).
+
+### POOL
+
+- **Value:** `$%POOL(organization pool)%`: the units in an organization's [shared pool](09-society.md#shared-pools), 0 for no such organization or pool.
+- **Test:** `POOL(organization pool cmp n)`
+- **Example:** `IF POOL(The Order SUPPLIES >= 5)`
+- **Notes:** not inherited. The organization's name may have spaces; the pool is the last word.
 
 ### EXPLORED
 

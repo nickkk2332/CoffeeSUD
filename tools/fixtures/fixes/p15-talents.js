@@ -16,9 +16,12 @@ try {
 	write("talents.ini", 'HERBALIST=TITLE="Herb-sense" LORE="HERBS_1,HERBS_2,HERBS_3" ABILITY=Herbalism PROFICIENCY=25 MESSAGE="The plants\' names come to you unbidden."\n'
 		+ 'DREAMER=TITLE="Dream-sight" LORE="HERBS_1" CHANCE=0\n'
 		+ 'SEER=TITLE="Second sight" LORE="HERBS_2" CHANCE=50\n'
-		+ 'BROKEN=TITLE="Nothing" LORE="NOSUCH" ABILITY=NoSuchSkillAtAll\n');
+		+ 'BROKEN=TITLE="Nothing" LORE="NOSUCH" ABILITY=NoSuchSkillAtAll\n'
+			+ 'SEASONED=TITLE="Seasoned eye" LORE="HERBS_1" MASK="-LEVEL +>9"\n');
 	WorldFiles.configure(root);
-	check("problems", s(T.problems()).indexOf("BROKEN: no ability NoSuchSkillAtAll") >= 0, s(T.problems()));
+	var refs = s(CM.core.CrossRefs.errors());
+	check("problems", refs.indexOf("talents.ini: BROKEN/ABILITY: no ability NoSuchSkillAtAll") >= 0 && refs.indexOf("talents.ini: BROKEN/LORE: no lore NOSUCH in lore/") >= 0
+		&& refs.indexOf("talents.ini: HERBALIST") < 0, refs);
 	ann = newMob("GenMob", R); ann.setName("Fixp15 Ann"); ann.setPlayerStats(CMClass.getCommon("DefaultPlayerStats"));
 
 	// the first lore: the talent it completes, of chance 0, is decided dormant; the one that needs more waits
@@ -44,6 +47,13 @@ try {
 	var again = LB.unlock(ann, "HERBS_3", false, null);
 	check("read-again", !again && ann.fetchAbility("Herbalism").proficiency() == 60 && RS.counter("talents") == at, "reading again granted or drew");
 	check("broken-waits", s(T.decided(ann, "BROKEN")) == "", "a talent with unknown lore was decided");
+	// a talent whose mask waits on a level: decided when the level comes, without reading again
+	check("level-waits", s(T.decided(ann, "SEASONED")) == "", "decided before the level");
+	ann.basePhyStats().setLevel(12); ann.recoverPhyStats(); ann.recoverCharStats();
+	check("level-decides", s(T.decided(ann, "SEASONED")) == "awakened", "not decided at level 12: " + s(T.list(ann)));
+	function evs(m) { var e = CM.core.Provenance.recent(m), o = ""; for (var i = 0; i < e.size(); i++) o += s(e.get(i).describe()) + "\n"; return o; }
+	var ev = evs(ann), led = s(CM.core.Ledgers.character(ann));
+	check("ledger", ev.indexOf("awakened: Herb-sense") >= 0 && ev.indexOf("did not awaken, and will not: Dream-sight") >= 0 && led.indexOf("Herb-sense (awakened)") >= 0, ev + " / " + led);
 } finally {
 	if (ann != null) ann.destroy();
 	R.destroy();

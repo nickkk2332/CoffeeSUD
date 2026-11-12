@@ -239,7 +239,7 @@ public class Equipment extends StdCommand
 						{
 							if(paragraphView)
 							{
-								String name=thisItem.name();
+								String name=thisItem.name(seer); // A23: as the one looking knows it
 								if(!allPlaces)
 									name=CMStrings.ellipseColored(name,wrap);
 								if(wornCode==Wearable.WORN_HELD)
@@ -275,7 +275,7 @@ public class Equipment extends StdCommand
 								if((layer < lastLayer)&&(lastLayer < Short.MAX_VALUE))
 									indent += " ";
 								lastLayer = layer;
-								String name=thisItem.name();
+								String name=thisItem.name(seer); // A23
 								if((CMStrings.lengthMinusColors(indent+name)>shortWrap)&&(!allPlaces))
 									name=CMStrings.ellipseColored(name,shortWrap);
 								if(mob==seer)

@@ -1,7 +1,7 @@
 # Developer-tool and creator-documentation audit
 
 Date: 2026-11-05. This audit follows the implementation completion work and
-accompanies the new [creator handbook](../docs/creator/README.md).
+accompanies the new [creator handbook](../SUDDocs/creator/README.md).
 
 ## Scope and method
 
@@ -157,7 +157,7 @@ This finding is separate from the confirmed/fixed literal-text formatting defect
 
 ## Deliberate deferrals
 
-The [feature index](../docs/creator/feature-index.md#deferred-work) lists all 20
+The [feature index](../SUDDocs/creator/feature-index.md#deferred-work) lists all 20
 deferred entries, with links to LATER.md. They include the generic companion
 and `.dlg` dialogue controllers, dedicated LLM services, rumor service,
 area invasions, generic puzzle controller, linked profile stash, gradual
@@ -178,7 +178,7 @@ all inventory paths and local links/anchors in the new handbook/audit. A new
 feature family requires an explicit chapter mapping. Coverage is discoverability
 evidence, not proof that a chapter explains every edge case.
 
-`python3 docs/creator/examples/check.py` builds the supplied museum on temporary
+`python3 SUDDocs/creator/examples/check.py` builds the supplied museum on temporary
 world/database/save copies, publishes it, runs ordinary-character and API tests,
 then exercises a campaign save and restore in separate ordinary game processes.
 Failures retain transcripts. A separate s25-markup fixture checks literal markup

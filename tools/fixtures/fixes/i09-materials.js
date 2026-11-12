@@ -22,7 +22,7 @@ function stats(item) { return s(item.fetchEffect("Prop_ItemModifiers").combatSta
 function details(item) { return s(item.fetchEffect("Prop_ItemModifiers").combatStatDetails()); }
 var RM = CM.Items.interfaces.RawMaterial;
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "ability-composition/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/combat"), new java.io.File(root, "combat"));

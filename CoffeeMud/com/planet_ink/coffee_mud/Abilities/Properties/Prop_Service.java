@@ -75,7 +75,18 @@ public class Prop_Service extends Property
 		if(why.isEmpty())
 			return true;
 		msg.source().tell(CMLib.lang().L("@x1: not now, @x2.", s.title, why));
+		Provenance.refused(msg.source(), Services.FAMILY, affected.Name() + " " + s.id, why, "SERVICES says when and to whom it is given, and what it costs");
 		return false;
+	}
+
+	@Override
+	public boolean tick(final Tickable ticking, final int tickID)
+	{
+		if(!super.tick(ticking, tickID))
+			return false;
+		if((affected instanceof MOB) && (tickID == Tickable.TICKID_MOB))
+			Services.expire((MOB)affected); // holds not done in time are given back
+		return true;
 	}
 
 	@Override

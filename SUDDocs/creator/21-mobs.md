@@ -1323,7 +1323,7 @@ The shipped examples are `resources/examples/monsters.cmare` (a file of
 ### From a script
 
 Mobs can also be built in JavaScript; see [05-javascript.md](05-javascript.md)
-and the example `docs/creator/examples/ember-trial/world/resources/creator/build.js`,
+and the example `SUDDocs/creator/examples/ember-trial/world/resources/creator/build.js`,
 which creates `GenMob`s with `CC.getMOB('GenMob')`, sets their name, display,
 level, rejuv, tattoos, properties and behaviors, calls `setStartRoom`, and
 `bringToLife(room, true)`.

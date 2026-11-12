@@ -17,7 +17,7 @@ function throws(name, fn, part) { var why = ""; try { fn(); } catch (e) { why = 
 function filter(a, words) { var L = new java.util.ArrayList(); for (var i = 0; i < words.length; i++) L.add(words[i]); return s(IL.setFilter(a, L)); }
 var R = scratchRoom(), actors = [], items = [];
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copy(new java.io.File(ex, "ability-composition/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/modules"), new java.io.File(root, "modules"));
 	copy(new java.io.File(ex, "combat-profiles/combat"), new java.io.File(root, "combat"));

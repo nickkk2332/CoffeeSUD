@@ -753,6 +753,21 @@ group_saves5()
 	jsresults p2load-play.txt
 	play p2load-check.txt ydb yworld 'jrun /resources/_fixes/p2-loadout-check.js\nquit\nn\n' RESTORE=p2load TIMEMODE=TURNS
 	jsresults p2load-check.txt
+	# phase 2: organizations, pools, affiliation rules, a held service payment, a culture, a role, talents and records
+	# kept in a save (a world of their own: the play writes its world files)
+	mkdir -p "$W/p2db" && cp "$GAME/resources/fakedb/fakedb.schema" "$W/p2db/"
+	cp -r "$GAME/world" "$W/p2world"
+	play p2phase2-play.txt p2db p2world "Keeper\n${NEWCHAR}get book\nread book\njrun /resources/_fixes/p2-phase2-play.js\nsave p2phase2\nquit\nn\n" RESTORE=NEW RANDOMSEED=42 TIMEMODE=TURNS
+	jsresults p2phase2-play.txt
+	# a rules file edited after the save: the restore names it, and what that means
+	printf '\n[NEWWAYS]\nNAME=New ways\n' >> "$W/p2world/cultures.ini"
+	# a world update renames a role a follower already holds: renames.ini carries it over at the restore
+	sed -i 's/^\[GUARD\]/[WARDEN]/' "$W/p2world/formations.ini"
+	printf '[formations.ini]\nGUARD=WARDEN\n' > "$W/p2world/renames.ini"
+	play p2phase2-check.txt p2db p2world 'jrun /resources/_fixes/p2-phase2-check.js\nquit\nn\n' RESTORE=p2phase2 TIMEMODE=TURNS
+	expect p2phase2-check.txt "Changed rules file: cultures.ini"
+	expect p2phase2-check.txt "role GUARD is WARDEN now"
+	jsresults p2phase2-check.txt
 
 	# S19 and S18: areas made in play survive a save: an instance (the
 	# crypt's), with its rooms, its dead, its timer and its group, and the
@@ -903,7 +918,7 @@ group_combat()
 group_trial()
 {
     echo "Played: Ember Trial sample publication, mortal combat, completion and fresh-process persistence"
-    python3 "$ROOT/docs/creator/examples/ember-trial/check.py" > "$W/trial.txt" 2>&1 || FAIL=1
+    python3 "$ROOT/SUDDocs/creator/examples/ember-trial/check.py" > "$W/trial.txt" 2>&1 || FAIL=1
     jsresults trial.txt
 }
 

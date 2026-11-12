@@ -6,9 +6,9 @@ This slice extends existing affix XML, generation, loot tables, workstations,
 raw resources, module state and combat stat sources. It does not replace the
 legacy crafting or enchantment systems. The new handler is default off.
 
-The [creator guide](../docs/creator/17-item-modifiers-crafting.md) documents
+The [creator guide](../SUDDocs/creator/17-item-modifiers-crafting.md) documents
 schemas, commands, source pins, limits, transactions and remaining scope.
-The [Ember Trial](../docs/creator/examples/ember-trial/README.md) demonstrates
+The [Ember Trial](../SUDDocs/creator/examples/ember-trial/README.md) demonstrates
 generated equipment and all five selective operations with an ordinary player.
 
 ## Final focused validation

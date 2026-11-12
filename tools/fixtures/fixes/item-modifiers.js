@@ -16,7 +16,7 @@ function make(a){var list=CM.core.GenCalls.items('randareas/embertrial-loot.xml'
 function prepare(a,op,item,index){return String(IC.prepare(a,'embertrial.'+op,item,String(index)));}
 function commit(a,id){return String(IC.commit(a,id||0));}
 try{
- var examples=new java.io.File('../docs/creator/examples');
+ var examples=new java.io.File('../SUDDocs/creator/examples');
  copy(new java.io.File(examples,'ability-composition/modules'),new java.io.File(root,'modules'));
  copy(new java.io.File(examples,'combat-profiles/modules'),new java.io.File(root,'modules'));
  copy(new java.io.File(examples,'combat-profiles/combat'),new java.io.File(root,'combat'));

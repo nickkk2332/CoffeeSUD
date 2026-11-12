@@ -15,8 +15,8 @@ tools or promise every PoE crafting operation.
 Create a fresh deployment using the sample's factory and launch it normally:
 
 ```sh
-python3 docs/creator/examples/ember-trial/make_world.py /tmp/sud-forge
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-forge
+python3 SUDDocs/creator/examples/ember-trial/make_world.py /tmp/sud-forge
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-forge
 ```
 
 At camp:

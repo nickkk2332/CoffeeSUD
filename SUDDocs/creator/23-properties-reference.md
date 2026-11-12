@@ -1362,7 +1362,7 @@ CoffeeSUD: a mob the story needs alive, or one that gives up. MODE=YIELD: under 
 
 **Parameters:** the faction ID (for example `elves.ini`). Set by the engine.
 
-CoffeeSUD internal (DefaultFaction). A faction file can define player effects with `PLAYEREFFECT1`, `PLAYEREFFECT2`, ... keys of the form `AbilityID;parameters;band codes or a zapper mask` (see `AHELP FACTIONPLAYEREFFECTS` and [docs/organizations.md](../organizations.md)). For a player character in such a faction, the engine attaches one Prop_FactionEffects. It reads the faction rules each time, instantiates the listed abilities for the bands the character currently falls in (or whose mask they fit), forwards stat, tick and message handling to them, and drops them when the character leaves the band.
+CoffeeSUD internal (DefaultFaction). A faction file can define player effects with `PLAYEREFFECT1`, `PLAYEREFFECT2`, ... keys of the form `AbilityID;parameters;band codes or a zapper mask` (see `AHELP FACTIONPLAYEREFFECTS` and [SUDDocs/organizations.md](../organizations.md)). For a player character in such a faction, the engine attaches one Prop_FactionEffects. It reads the faction rules each time, instantiates the listed abilities for the bands the character currently falls in (or whose mask they fit), forwards stat, tick and message handling to them, and drops them when the character leaves the band.
 
 Notes:
 
@@ -4238,7 +4238,8 @@ CoffeeSUD addition. Gives the host text for the senses other than sight. `LISTEN
 
 ```text
 {"services": [{"id", "title", "words": [...], "mask", "refusal", "hours": "from-to",
-  "station", "cost": {"money": n} or {"pool": id, "units": n, "org": name}}]}
+  "station", "cost": {"money": n} or {"pool": id, "units": n, "org": name},
+  "pay": "ask" or "done", "hold": ticks}]}
 ```
 
 **Example:**
@@ -4268,8 +4269,18 @@ names it; without it, their first organization).
   ledger. Words said to the room ask no one.
 
 What the service does is the NPC's own: its script answers the word (a
-`SPEECH_PROG`), as it would without the record. A record that cannot be read
-offers nothing; the property's description (`STAT`, `PROPCHECK`) says why.
+`SPEECH_PROG`), as it would without the record. With `"pay": "ask"` (the
+default) the cost is kept when the word is said; with `"pay": "done"` it is
+held, kept only when the NPC's script says `MPSERVICE $n DONE id`, and given
+back if the script says `MPSERVICE $n REFUND id` or `hold` game ticks (30 by
+default) pass first. `MPSERVICE $n REFUND id` also gives back a kept payment,
+once. The last 16 payments are kept in the record itself (`payments`), so a
+hold survives a save; a hold whose payer is not in the game when it runs out
+is given back when they are. A record that cannot be read
+offers nothing; `PROPCHECK` says why. `WORLD CHECK ONLY=REFS` follows each
+service's pool, organization and workstation (which must be in the NPC's room),
+and reports a service whose words nothing on the NPC answers, since asking for it
+would pay for nothing.
 See [09 Shared pools](09-society.md#shared-pools) and
 [06 Service records](06-npcs-dialogue.md#service-records).
 Test: [p04-services.js](../../tools/fixtures/fixes/p04-services.js).
@@ -4585,7 +4596,7 @@ MASK="[zapper mask]" HIDE=TRUE|FALSE MSG="[refusal]"
 MASK="+CLAN Thieves" HIDE=TRUE MSG="That is for guild members only."
 ```
 
-CoffeeSUD addition. A shop stock item's customer access rule. A customer who fails the mask is refused `BUY` with `MSG`; with `HIDE=TRUE` the stock is also hidden from them, with `HIDE=FALSE` it is listed marked as restricted. Membership and rank masks are evaluated for the buyer. See `AHELP ORGANIZATIONS` and docs/organizations.md.
+CoffeeSUD addition. A shop stock item's customer access rule. A customer who fails the mask is refused `BUY` with `MSG`; with `HIDE=TRUE` the stock is also hidden from them, with `HIDE=FALSE` it is listed marked as restricted. Membership and rank masks are evaluated for the buyer. See `AHELP ORGANIZATIONS` and SUDDocs/organizations.md.
 
 ### Prop_StoryRecords
 

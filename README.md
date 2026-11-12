@@ -49,18 +49,18 @@ step from [`DEVPLAN.md`](DEVPLAN.md).
 - **Optional world modules.** Creators can select versioned modules, validate
   dependencies and keep typed campaign state with migration/suspension rules.
   New modules default off; an example counter demonstrates the lifecycle.
-  See the [module guide](docs/creator/14-optional-modules.md).
+  See the [module guide](SUDDocs/creator/14-optional-modules.md).
 - **Optional composed abilities.** Versioned base skills and supports combine
   tags, damage, costs, timing, bounded chains and burning through an inspectable
   modifier pipeline. Characters retain independent choices and cooldowns across
-  saves. See the [guide and example](docs/creator/15-ability-composition.md).
+  saves. See the [guide and example](SUDDocs/creator/15-ability-composition.md).
 - **Optional combat profiles.** Composed skills and their burns can use versioned
   conversion/defense rules, equipment stats and recorded result explanations.
-  See the [guide and examples](docs/creator/16-combat-profiles.md).
-  [Tracked item modifiers and crafting](docs/creator/17-item-modifiers-crafting.md)
+  See the [guide and examples](SUDDocs/creator/16-combat-profiles.md).
+  [Tracked item modifiers and crafting](SUDDocs/creator/17-item-modifiers-crafting.md)
   add saved numeric rolls, exclusive groups, selective edits, protection and
   repeat-safe material costs through another optional module.
-  The [Ember Trial](docs/creator/examples/ember-trial/README.md) combines these
+  The [Ember Trial](SUDDocs/creator/examples/ember-trial/README.md) combines these
   opt-in systems in a complete playable sample adventure.
 - **More for content authors.** CoffeeSUD adds new MOBPROG triggers and
   functions, and fuller JavaScript (Rhino, ES6). Quests gain:
@@ -131,10 +131,10 @@ world.
 
 Guides:
 
-- **[CoffeeSUD creator handbook](docs/creator/README.md)**: the current front
+- **[CoffeeSUD creator handbook](SUDDocs/creator/README.md)**: the current front
   door for world authors and developers, with system chapters, a cookbook,
   runnable examples, tool/settings references and a complete feature index.
-- [`docs/languages.md`](docs/languages.md): custom languages, comprehension and
+- [`SUDDocs/languages.md`](SUDDocs/languages.md): custom languages, comprehension and
   immersion, local vocabulary, and world-owned socials and help.
 - [`CoffeeMud/guides/ScriptingSUD.html`](CoffeeMud/guides/ScriptingSUD.html):
   CoffeeSUD's additions to MOBPROG scripting and quests.
@@ -144,7 +144,7 @@ Guides:
   Archon's Guide and others). These still apply to the engine. Ignore their
   parts on servers, web pages and multiplayer administration.
 - `CoffeeMud/coffeemud.ini`: engine settings, with comments. The
-  [world settings allowlist](docs/creator/world-settings.md) identifies which
+  [world settings allowlist](SUDDocs/creator/world-settings.md) identifies which
   rules a world can override in `CoffeeMud/world/world.ini`.
 
 ## Development
@@ -177,7 +177,7 @@ Ground rules (see [`PLAN.md`](PLAN.md)):
 | [`DEVPLAN.md`](DEVPLAN.md) | The engine capabilities and builder tools being added now, item by item. |
 | [`LATER.md`](LATER.md) | Things wanted but out of the current scope. |
 | [`audit/`](audit/README.md) | The audit of what a builder can and cannot do without Java, which `DEVPLAN.md` is built from. |
-| [`DOCS/`](DOCS/README.md) | A chapter-by-chapter analysis of CoffeeMud's engine, written before the fork. |
+| [`archive/oldenginedocs/`](archive/oldenginedocs/README.md) | A chapter-by-chapter analysis of CoffeeMud's engine, written before the fork. |
 | `archive/mudgrinder/` | CoffeeMud's MUDGrinder web editor, kept for reference (it went with the web server). |
 
 ## Licence and credits

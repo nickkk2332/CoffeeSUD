@@ -186,7 +186,7 @@ New for builders: `DISMOUNT_PROG` and `REMOVING_PROG`; `FACTIONVALUE` and
   lacks it.
 - DOCS lists more property defects than I1 named (area `Prop_InstantDeath`,
   `Prop_LanguageSpeaker` HOMEONLY, `Prop_WeaponImmunity` LEVEL,
-  `Prop_RoomView` ATTACK, and others in `DOCS/conditions/b075` to `b078`).
+  `Prop_RoomView` ATTACK, and others in `archive/oldenginedocs/conditions/b075` to `b078`).
   Taken in 2b, at the owner's word: `audit/property-defects.md` says what
   became of each item of the four chapters' lists. 38 behaviours are fixed,
   each with a check in `tools/fixtures/fixes/p-properties.js` that fails on
@@ -3078,7 +3078,7 @@ F20
   guild content and a gated members' room. Party founding validates members and
   charges once; CLANVOTES=PROFILE counts eligible profiles and permits an
   authorised sole-profile action without another character's vote. PARTY CLANS
-  lists character memberships. Full authoring examples: docs/organizations.md.
+  lists character memberships. Full authoring examples: SUDDocs/organizations.md.
 - Party corrections alongside this step: own-character SWITCH bypasses physical
   possession vetoes (including feign death); HELP PARTY no longer loses to the
   old glossary entry. PARTY RULES exposes world rules. ACTIVECHARMAX and
@@ -3102,7 +3102,7 @@ T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T14, T16, T17, T18, T19
 Implemented. Verified: 3,445 regression checks and 97 smoke checks passed;
 the engine suite matched its existing baseline (47 passed, 3 known failures).
 Authoring examples and parameter
-reference: `docs/travel.md`, HELP TRAVEL/JOURNEY/PORTS/TIMETABLE/STABLE/TOUCH,
+reference: `SUDDocs/travel.md`, HELP TRAVEL/JOURNEY/PORTS/TIMETABLE/STABLE/TOUCH,
 and the corresponding AHELP property and behaviour topics.
 
 - T2: `ResetWhole ONREENTRY=true MINAWAY=<game hours> SKIPROOMS="<room mask>"
@@ -3179,7 +3179,7 @@ same-named passengers, coach state, external route file and mid-shaft lift.
 #### 2n. Languages and vocabulary (14)
 
 L1–L14 done. Authoring examples and file formats are in
-[docs/languages.md](docs/languages.md); AHELP LANGUAGE_AUTHORING,
+[SUDDocs/languages.md](SUDDocs/languages.md); AHELP LANGUAGE_AUTHORING,
 LANGUAGE_SCRIPTING and WORLD_VOCABULARY describe the tools in-game.
 
 - L1, L4, L10, L11: one comprehension lookup (`core/Languages`) serves
@@ -3549,7 +3549,7 @@ P18, P19, P20, P21, P22, P23, P24, P25, P26, P27, P28, P29
 #### 2p. Presentation (18) — done
 
 PR1, PR2, PR3, PR6, PR7, PR8, PR9, PR10, PR11, PR12, PR13, PR14, PR15, PR16,
-PR17, PR18, PR19, PR20. Authoring reference: [docs/presentation.md](docs/presentation.md).
+PR17, PR18, PR19, PR20. Authoring reference: [SUDDocs/presentation.md](SUDDocs/presentation.md).
 
 - Viewer-aware descriptions and readable text share StoryText: existing VARIES
   tags plus world variables, quests, party tattoos, holidays, wanted status,
@@ -3590,7 +3590,7 @@ tables) builds on it.
 ## Authoring reliability consolidation
 
 The first seven findings from [the authoring review](audit/authoring-limit-review.md)
-are implemented. [The authoring reliability guide](docs/authoring-reliability.md)
+are implemented. [The authoring reliability guide](SUDDocs/authoring-reliability.md)
 describes compatibility and the new controls.
 
 - Service NPCs and MOB JavaScript speech callbacks share perception and partial

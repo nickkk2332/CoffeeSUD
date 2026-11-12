@@ -18,7 +18,7 @@ function cleanCombat(){for(var i=0;i<actors.length;i++)actors[i].makePeace(true)
 var room=scratchRoom(),actors=[];
 function actor(name){var m=newMob("GenMob",room);m.setName(name);m.baseState().setHitPoints(10000);m.baseState().setMana(1000);m.baseState().setMovement(1000);m.baseCharStats().setStat(CM.Common.interfaces.CharStats.STAT_SAVE_FIRE,-1000);m.recoverCharStats();m.recoverMaxState();m.resetToMaxState();actors.push(m);return m;}
 try {
-    var example=new java.io.File("../docs/creator/examples/ability-composition");
+    var example=new java.io.File("../SUDDocs/creator/examples/ability-composition");
     var mods=new java.io.File(folder,"modules");mods.mkdirs();
     var defs=new java.io.File(folder,"compositions");defs.mkdirs();
     var moduleJSON=JSON.parse(read(new java.io.File(example,"modules/abilities.composition.json")));

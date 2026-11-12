@@ -89,8 +89,56 @@ try {
 	out = said();
 	check("money-short", out.indexOf("Healing: not now, it costs") >= 0 && money(P) == 0, out);
 
-	// a record that cannot be read offers nothing, and says why
+	// paid when done: the cost is held, kept when the NPC's script says DONE (MPSERVICE), given back on REFUND or when the hold runs out
+	CMLib.beanCounter().addMoney(P, 50);
+	var record = s(A.text());
+	var S2 = scriptOn(healer, "SPEECH_PROG mend gear\nmpservice $n done mend\n~\n");
+	A.setMiscText(JSON.stringify({ services: [
+		{ id: "heal", title: "Healing", words: ["heal"], cost: { money: 10 } },
+		{ id: "mend", title: "Mending", words: ["mend gear"], cost: { money: 5 }, pay: "done", hold: 2 }] }));
+	function pays() { var j = JSON.parse(s(A.text())); return j.payments || []; }
+	had = money(P);
+	said(); CMLib.commands().postSay(P, healer, "mend gear", false, false);
+	out = said();
+	var listed2 = s(SV.list(P)).replace(/\s+/g, " ");
+	check("held", money(P) == had - 5 && out.indexOf("it is held until it is done") >= 0 && pays()[0].state == "held"
+		&& listed2.indexOf("Mending - say mend gear; 5") >= 0 && listed2.indexOf("paid when done") >= 0 && listed2.indexOf("Held for you: Mending at Fixp04 Healer") >= 0, out + " / " + listed2);
+	runQueued(S2);
+	check("done", pays()[0].state == "paid" && money(P) == had - 5, s(A.text()));
+	// a payment given back by the NPC's script, once
+	CMLib.commands().postSay(P, healer, "heal", false, false);
+	var before = money(P);
+	said(); CM.core.Services.refund(healer, P, "heal");
+	out = said();
+	var again = ""; try { CM.core.Services.refund(healer, P, "heal"); } catch (e) { again = s(e); }
+	check("refund", money(P) == before + 10 && out.indexOf("gives back") >= 0 && again.indexOf("no payment of Fixp04 Pip for heal to give back") >= 0, out + " / " + again);
+	// a hold the NPC never finishes is given back when its time runs out
+	healer.delScript(S2);
+	had = money(P);
+	CMLib.commands().postSay(P, healer, "mend gear", false, false);
+	var j = JSON.parse(s(A.text())); j.payments[j.payments.length - 1].until = 0; A.setMiscText(JSON.stringify(j));
+	said(); A.tick(healer, Tickable.TICKID_MOB);
+	out = said();
+	check("expired", money(P) == had && out.indexOf("it was not done in time") >= 0 && pays()[pays().length - 1].state == "refunded", out);
+	// LEDGER: the payments, the hold, the refunds, the refusals
+	var evs = CM.core.Provenance.recent(P), events = ""; for (var ei = 0; ei < evs.size(); ei++) events += s(evs.get(ei).describe()) + "\n";
+	check("ledger", events.indexOf("held 5") >= 0 && events.indexOf("kept the held payment for Mending") >= 0 && events.indexOf("refunded") >= 0, events);
+	A.setMiscText(record);
+
+	// WORLD CHECK follows the records: the pool exists; no anvil in the healer's room; nothing answers the words but heal's
+	// (the check reads the NPCs of the map's rooms; the test's own room is on no map)
+	M.location().bringMobHere(healer, false);
+	scriptOn(healer, "SPEECH_PROG heal mend\nmpecho The healer's hands glow.\n~\n");
+	var refs = s(CM.core.CrossRefs.errors());
+	check("refs", refs.indexOf("Fixp04 Healer: /Prop_Service/services/4/station: its room has no workstation anvil") >= 0
+		&& refs.indexOf("answers 'bless'") >= 0 && refs.indexOf("answers 'heal'") < 0 && refs.indexOf("/cost/pool") < 0, refs);
+	A.setMiscText(JSON.stringify({ services: [{ id: "lodging", title: "Lodging", words: ["lodge"], cost: { pool: "NOSUCHPOOL", units: 1 } }] }));
+	refs = s(CM.core.CrossRefs.errors());
+	check("refs-pool", refs.indexOf("/Prop_Service/services/0/cost/pool: no shared pool NOSUCHPOOL in orgpools.ini") >= 0, refs);
+	// a record that cannot be read offers nothing, and says why; PROPCHECK reads it as the game will
 	A.setMiscText('{"services":[{"id":"bad"}]}');
+	var pc = s(CM.core.PropCheck.checkHost(healer));
+	check("propcheck", pc.indexOf("its service records cannot be read: ") >= 0, pc);
 	check("unreadable", SV.of(healer).size() == 0 && s(A.accountForYourself()).indexOf("cannot be read") >= 0, s(A.accountForYourself()));
 } finally {
 	made.forEach(function (m) { if (!m.amDestroyed()) m.destroy(); });

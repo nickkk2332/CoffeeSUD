@@ -147,6 +147,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		CHARCR_CLASSCONFIRM,
 		CHARCR_ORIGINSTART,
 		CHARCR_ORIGINPICKED,
+		CHARCR_CULTURESTART,
+		CHARCR_CULTUREPICKED,
 		CHARCR_KITSTART,
 		CHARCR_KITPICKED,
 		CHARCR_QUESTIONSTART,
@@ -1072,6 +1074,10 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return charcrOriginStart(loginObj, session);
 		case CHARCR_ORIGINPICKED:
 			return charcrOriginPicked(loginObj, session);
+		case CHARCR_CULTURESTART:
+			return charcrCultureStart(loginObj, session);
+		case CHARCR_CULTUREPICKED:
+			return charcrCulturePicked(loginObj, session);
 		case CHARCR_KITSTART:
 			return charcrKitStart(loginObj, session);
 		case CHARCR_KITPICKED:
@@ -3101,6 +3107,8 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			return "CLASS";
 		case CHARCR_ORIGINSTART:
 			return "ORIGIN";
+		case CHARCR_CULTURESTART:
+			return "CULTURE";
 		case CHARCR_TRAITSSTART:
 			return "TRAITS";
 		case CHARCR_KITSTART:
@@ -3241,6 +3249,9 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 		final String s=loginObj.queue.remove(0);
 		if(s.equals("ORIGIN"))
 			loginObj.state=LoginState.CHARCR_ORIGINSTART;
+		else
+		if(s.equals("CULTURE"))
+			loginObj.state=LoginState.CHARCR_CULTURESTART;
 		else
 		if(s.equals("KIT"))
 		{
@@ -4336,6 +4347,45 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 	}
 
 	/**
+	 * P11: the CULTURE step, when world/cultures.ini has cultures offered at
+	 * creation (CREATION=YES) that this character may take up.
+	 */
+	protected LoginResult charcrCultureStart(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final List<Origins.Origin> choices=Cultures.creationChoices(mob);
+		if(choices.size()==0)
+			return nextQueued(loginObj);
+		if(CreationSteps.mode("CULTURE").equals("RANDOM"))
+		{
+			Cultures.pick(mob, choices.get(CMLib.dice().roll(1, choices.size(), -1)));
+			return nextQueued(loginObj);
+		}
+		session.println(null,null,null,Cultures.menu(choices));
+		session.promptPrint(L("^NYour culture: "));
+		loginObj.state=LoginState.CHARCR_CULTUREPICKED;
+		return LoginResult.INPUT_REQUIRED;
+	}
+
+	protected LoginResult charcrCulturePicked(final LoginSessionImpl loginObj, final Session session)
+	{
+		final MOB mob=loginObj.mob;
+		final String input=(loginObj.lastInput==null)?"":loginObj.lastInput.trim();
+		final Origins.Origin C=Origins.find(Cultures.creationChoices(mob), input);
+		if(C==null)
+		{
+			if((input.length()>0)&&(!input.equals("?")))
+				session.println(L("'@x1' is not one of the cultures.",input));
+			loginObj.state=LoginState.CHARCR_CULTURESTART;
+			return null;
+		}
+		Cultures.pick(mob, C);
+		session.println(L("^NYour culture: ^H@x1^N.",C.name()));
+		JSProgression.creationStep(mob,"culture"); // JS23's onCreationStep
+		return nextQueued(loginObj);
+	}
+
+	/**
 	 * P7: the KIT step, a menu for each group of starting kits the character
 	 * may take more than one of (one kit is simply taken).
 	 */
@@ -4693,6 +4743,7 @@ public class CharCreation extends StdLibrary implements CharCreationLibrary
 			final MOB mob=loginObj.mob;
 			Origins.apply(mob); // its start room, items, abilities, standing, tattoos, money and script
 			executeScript(mob,charCrScripts.get("ORIGIN"));
+			Cultures.applyPick(mob); // P11: the culture chosen at the CULTURE step, after the origin's
 			StartingKits.apply(mob, loginObj.kits); // every kit that fits, and those chosen
 			CreationSteps.applyAnswers(mob); // the answers to creation.ini's questions
 			Perks.traitRewards(mob); // P13: what the traits and flaws give

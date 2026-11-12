@@ -25,7 +25,7 @@ pack alone needs `abilities.triggers` and `progression.tracks` in `MODULES`.
 ## Play
 
 ```bash
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-packs --new
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-packs --new
 ```
 
 Make a character. At camp:
@@ -51,7 +51,7 @@ starts the bond (`The wisp knows you. The wisp's warmth settles on you.`).
 ## Restore
 
 ```bash
-python3 docs/creator/examples/ember-trial/play.py /tmp/sud-packs --restore familiar
+python3 SUDDocs/creator/examples/ember-trial/play.py /tmp/sud-packs --restore familiar
 ```
 
 ```text

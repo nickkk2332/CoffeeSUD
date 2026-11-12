@@ -40,7 +40,7 @@ try {
 	check("custody-default", !holds(jade), "the jade came back though the band's sockets keep nothing");
 
 	// gear that gives a composed-skill support
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	copyDir(new java.io.File(ex, "ability-composition/modules"), dir("modules"));
 	copyDir(new java.io.File(ex, "ability-composition/compositions"), dir("compositions"));
 	WorldFiles.configure(folder);

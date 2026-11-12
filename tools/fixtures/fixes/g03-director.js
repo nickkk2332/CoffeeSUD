@@ -28,7 +28,7 @@ function hp(M, pct) { M.curState().setHitPoints(Math.floor(M.maxState().getHitPo
 function calm(R) { for (var i = 0; i < R.numInhabitants(); i++) R.fetchInhabitant(i).makePeace(true); }
 var plan = null;
 try {
-	var ex = new java.io.File("../docs/creator/examples");
+	var ex = new java.io.File("../SUDDocs/creator/examples");
 	var mods = dir("modules");
 	copyDir(new java.io.File(ex, "reward-escrow/modules"), mods);
 	copyDir(new java.io.File(ex, "encounter-director/modules"), mods);

@@ -62,7 +62,7 @@ Shell commands run from the repository root. Package names are relative to
 The repository root holds the game (`CoffeeMud/`), the test and tooling scripts
 (`tools/`), the handbook (`docs/`), the project plans (`PLAN.md`, `DEVPLAN.md`,
 `LATER.md`), per-feature audits (`audit/`) and the earlier subsystem analysis
-(`DOCS/`). Everything the engine runs is Java under
+(`archive/oldenginedocs/`). Everything the engine runs is Java under
 `CoffeeMud/com/planet_ink/coffee_mud/` (5,168 source files and about 1.4 million
 lines in this snapshot). Class files are compiled next to the sources; they are
 not tracked in git.
